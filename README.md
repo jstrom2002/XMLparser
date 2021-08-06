@@ -1,2 +1,3 @@
 # XMLparser
-Single-header XML parser in C++
+
+Extremely simple single-header XML parser in C++
