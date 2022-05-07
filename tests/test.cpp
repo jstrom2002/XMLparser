@@ -1,10 +1,13 @@
-#include "XMLparser.hpp"
+#include "XMLparser_test.h"
 #include <iostream>
-int main()
-{
-	XMLparser::XMLreader xml("cube_triangulate.dae", true);
-	for (auto nd : xml.nodes) {
-		std::cout << nd.ToString();
+#include <exception>
+int main(){
+	XMLparser_test::XMLparser_TESTS tests;
+	try {
+		tests.Run();
+	}
+	catch (std::exception e1) {
+		std::cout << e1.what() << std::endl;
 	}
 	return 0;
 }
