@@ -22,6 +22,7 @@ namespace XMLparser_test
 		};
 
 		TEST_RESULTS ParseTest(const char* filename_to_test);
+		TEST_RESULTS WriteToDiskTest(const char* filename_to_test);
 		TEST_RESULTS RunAllTests();
 	};
 }
