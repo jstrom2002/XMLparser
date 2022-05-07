@@ -1,6 +1,6 @@
 # XMLparser
 
-### _Single-header C++ XML parser using C++17 objects._  
+### _Single-header C++ Fast XML Parser._  
 
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/jstrom2002/XMLparser/main/LICENSE)
 [![GitHub Releases](https://img.shields.io/github/release/jstrom2002/XMLparser.svg)](https://github.com/jstrom2002/json/releases)
