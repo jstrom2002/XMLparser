@@ -9,3 +9,4 @@
 [![Average time to resolve an issue](https://isitmaintained.com/badge/resolution/jstrom2002/XMLparser.svg)](https://isitmaintained.com/project/jstrom2002/XMLparser "Average time to resolve an issue")
 
 Tested with MSVC and GCC C++98 compilers with all Wall/pedantic options (thanks to cpp.sh)  
+Some testing performed using data from [!Wikipedia's backups](http://dumps.wikimedia.your.org/backup-index.html)
