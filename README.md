@@ -11,4 +11,4 @@
 <br>
 
 ### About  
-Tested with MSVC and GCC C++98 compilers with all Wall/pedantic options (thanks to cpp.sh). Some testing performed using data from [Wikipedia's backups](http://dumps.wikimedia.your.org/backup-index.html). For questions about formatting, see the [W3 XML standard doc](https://www.w3.org/TR/xml/)
+Tested with MSVC and GCC C++98,C++11,C++14,C++17,C++20 compilers with all Wall/pedantic options (thanks to cpp.sh). Some testing performed using data from [Wikipedia's backups](http://dumps.wikimedia.your.org/backup-index.html). For questions about formatting, see the [W3 XML standard doc](https://www.w3.org/TR/xml/)
