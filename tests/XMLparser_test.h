@@ -1,28 +1,41 @@
 #pragma once
 #include <time.h>
 
-namespace XMLparser_test
-{
+namespace XMLparser_test {
+	struct TEST_RESULTS
+	{
+		bool passed = false;
+		clock_t start_time;
+		clock_t end_time;
+		float seconds = 0.0f;
+	};
+
+	class UnitTests
+	{
+	public:
+		TEST_RESULTS RunAllTests();
+
+	private:
+
+		TEST_RESULTS NodeConstructorTest();
+		TEST_RESULTS TrimWhitespaceTest();
+	};
+
 	class XMLparser_TESTS {
 	public:
 		XMLparser_TESTS() {}
 
-		// Run all tests for XMLparser.hpp.
-		void Run() {
-			RunAllTests();
-		}
+		// Main entry point for all tests for XMLparser.hpp.
+		void Run() { RunAllTests(); }
+
+		UnitTests unitTests;
 
 	private:
-		struct TEST_RESULTS
-		{
-			bool passed=false;
-			clock_t start_time;
-			clock_t end_time;
-			float seconds=0.0f;
-		};
 
+		// Individual tests.
 		TEST_RESULTS ParseTest(const char* filename_to_test);
 		TEST_RESULTS WriteToDiskTest(const char* filename_to_test);
+
 		TEST_RESULTS RunAllTests();
 	};
 }
