@@ -13,10 +13,10 @@ namespace XMLparser_test
 		result.start_time = clock();
 
 		XMLparser::XMLnode test_node(test_str);
-		result.passed &= 
+		result.passed &=
 			test_node.tag == "xml" &&
-			test_node.attributes.size() == 2 && 
-			test_node.type == XMLparser::TAG_TYPE::XML_DEFINITION
+			test_node.attributes.size() == 2 &&
+			test_node.type == XMLparser::XML_DEFINITION_TAG
 		;
 
 		result.end_time = clock();
@@ -83,7 +83,7 @@ namespace XMLparser_test
 		xml.load("BrainStem.dae", true);
 
 		result.start_time = clock();
-		xml.save(filename_to_test, true);
+		xml.save(filename_to_test);
 		result.end_time = clock();
 		for (auto nd : xml.nodes) {
 			std::cout << nd.ToString();
@@ -98,11 +98,14 @@ namespace XMLparser_test
 		std::vector<TEST_RESULTS> tests = {
 			ParseTest("cube_triangulate.dae"),
 			ParseTest("BrainStem.dae"),
+			ParseTest("abb_irb52_7_120.dae"),
+			ParseTest("kawada-hironx.dae"),
+			ParseTest("SkinAndMorph.dae"),
 			WriteToDiskTest("Test_3_XML.xml"),
 			unitTests.RunAllTests()
 		};
 		TEST_RESULTS all_tests;
-		for (auto test : tests) {
+		for (TEST_RESULTS& test : tests) {
 			all_tests.passed &= test.passed;
 			all_tests.seconds += test.seconds;
 		}

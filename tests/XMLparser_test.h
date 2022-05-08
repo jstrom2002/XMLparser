@@ -5,8 +5,8 @@ namespace XMLparser_test {
 	struct TEST_RESULTS
 	{
 		bool passed = false;
-		clock_t start_time;
-		clock_t end_time;
+		clock_t start_time=0;
+		clock_t end_time=0;
 		float seconds = 0.0f;
 	};
 
