@@ -21,24 +21,19 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.*/
 #pragma once
 #include <algorithm>
-#include <exception>
+#include <cstdlib>
 #include <fstream>
-#include <random>
-#include <string>
+#include <stdexcept>
 #include <sstream>
+#include <string>
 #include <vector>
 namespace XMLparser{
-#ifdef _WIN64
-    typedef uint64_t XMLuint;
-#else
-    typedef uint32_t XMLuint;
-#endif
-    void toLower(std::string& str) { std::transform(str.begin(), str.end(), str.begin(), [](unsigned char c) { return std::tolower(c); }); }
-    void trimWhitespace(std::string& str) { while (str[0] == ' ') { str = str.substr(1); }while (str[str.length() - 1] == ' ') { str = str.substr(0, str.length() - 1); } }    
-    void toLowerCaseAndTrimWhitespace(std::string& str) { toLower(str); trimWhitespace(str); }    
-    enum class TAG_TYPE {UNKNOWN,CLOSE,COMMENT,OPEN,SELF_CLOSING,XML_DEFINITION,COUNT};//open=='<...>', close=='</...>', self-closing=='<.../>',comment=='<!-- ... -->',xml=='<?...?>'    
-    std::string TAG_BEGINNINGS[int(TAG_TYPE::COUNT)]{"","</","<!--","<","<","<?"};
-    std::string TAG_ENDINGS[int(TAG_TYPE::COUNT)]{"",">","--!>",">","/>","?>"};
+    const struct TAG_TYPE { enum types : size_t {CLOSE=1u,COMMENT=2u,OPEN=3u,SELF_CLOSING=4u,XML_DEFINITION=5u,TAG_COUNT=6u};}tag_type;// replacement for enum which is not available in c++98, open=='<...>', close=='</...>', self-closing=='<.../>',comment=='<!-- ... -->',xml=='<?...?>' 0          
+    std::string toLower(std::string str) { for (size_t i = 0; i < str.length(); ++i) { str[i] = std::tolower(str[i]); } return str; }
+    std::string trimWhitespace(std::string str) { while (str[0] == ' ') { str = str.substr(1); }while (str[str.length() - 1] == ' ') { str = str.substr(0, str.length() - 1); }return str; }
+    std::string TAG_BEGINNINGS[(tag_type.TAG_COUNT)]{"","</","<!--","<","<","<?"};
+    std::string TAG_ENDINGS[tag_type.TAG_COUNT]{"",">","--!>",">","/>","?>"};
+    void XML_EXCEPTION(std::string err_str) { throw std::invalid_argument(err_str.c_str()); }
     class XMLattribute {
     public:
         std::string key, value;
@@ -49,33 +44,27 @@ namespace XMLparser{
         }
         std::string ToString() { return key + "=" + value; }
     private:
-        XMLattribute() { throw std::exception("ERROR! Cannot use default constructor."); }
+        XMLattribute() { XML_EXCEPTION("ERROR! Cannot use default constructor."); }
     };
     class XMLnode{
     public:
         std::vector<XMLattribute> attributes;
         std::string innerText,tag;
-        TAG_TYPE type;
+        unsigned int type;
         std::string getGuid() { return guid; }
-        bool hasMatchingTag() { return (type == TAG_TYPE::OPEN || type == TAG_TYPE::CLOSE); }
-        bool tagsEqual(const XMLnode& nd) {
-            std::string this_tag = tag;
-            toLowerCaseAndTrimWhitespace(this_tag);
-            std::string comp_tag = nd.tag;
-            toLowerCaseAndTrimWhitespace(comp_tag);
-            return this_tag == comp_tag;
-        }
+        bool hasMatchingTag() { return (type == tag_type.OPEN || type == tag_type.CLOSE); }
+        bool tagsEqual(const std::string& str) { return toLower(trimWhitespace(tag)) == toLower(trimWhitespace(str)); }
         std::string ToString() {
             std::string str = TAG_BEGINNINGS[int(type)]+(tag+(attributes.size()>0?" ":""));
-            for (XMLuint i=0;i<attributes.size();++i)
+            for (unsigned int i=0;i<attributes.size();++i)
                 str += (attributes[i].ToString()+((i<attributes.size() - 1)?" ":""));             
             return str+TAG_ENDINGS[int(type)]+innerText;
         }
         XMLnode(const std::string& str) {
             if (str.length() == 0) { // validation
-                throw std::exception("ERROR! Attempting to parse bad data to XML node entry.");
+                XML_EXCEPTION("ERROR! Attempting to parse bad data to XML node entry.");
             }
-            XMLuint pos = 0, start_pos = 0, end_pos = 0;
+            unsigned int pos = 0, start_pos = 0, end_pos = 0;
             char next_char = 0;
             bool in_string = false;
             while (pos < str.length()) {// Split string by whitespace into values: first value is the tag, the rest are attributes. Last attribute has closing bracket.
@@ -95,15 +84,15 @@ namespace XMLparser{
                     attributes.push_back(XMLattribute(str.substr(start_pos, end_pos - start_pos + 1)));
             }
             if (tag.find("<?") != std::string::npos) // identify type
-                type = TAG_TYPE::XML_DEFINITION;
+                type = tag_type.XML_DEFINITION;
             else if (tag.find("<!--") != std::string::npos)
-                type = TAG_TYPE::COMMENT;
+                type = tag_type.COMMENT;
             else if (tag.find("</") != std::string::npos)
-                type = TAG_TYPE::CLOSE;
+                type = tag_type.CLOSE;
             else if (tag.find("/>") != std::string::npos || (attributes.size() > 0 && attributes[attributes.size() - 1].value.find("/>") != std::string::npos))
-                type = TAG_TYPE::SELF_CLOSING;
+                type = tag_type.SELF_CLOSING;
             else if (tag.find("<") != std::string::npos)
-                type = TAG_TYPE::OPEN;
+                type = tag_type.OPEN;
             std::string* first_str = &tag; // remove tag bracket surroundings
             std::string* last_str = (attributes.size() > 0) ? &attributes[attributes.size() - 1].value : &tag;
             if (first_str->find(TAG_BEGINNINGS[int(type)]) != std::string::npos)
@@ -136,31 +125,25 @@ namespace XMLparser{
             std::vector<XMLnode*> nds;
             if (tag.length() == 0)
                 return nds;
-            toLowerCaseAndTrimWhitespace(tag);
-            for (int i = 0; i < nodes.size(); ++i) {
-                std::string tag2 = nodes[i].tag;
-                toLowerCaseAndTrimWhitespace(tag2);
-                if (tag == tag2)
+            for (unsigned int i=0;i<nodes.size();++i) {
+                if (nodes[i].tagsEqual(tag))
                     nds.push_back(&nodes[i]);
             }
             return nds;
         }
         XMLnode* findTagPair(XMLnode* nd) {
-            if (nd->tag.length() == 0 || !nd->hasMatchingTag())
-                return nullptr;
-            for (int i = 0; i < nodes.size(); ++i) 
-            {
-                if(nd->tagsEqual(nodes[i])&&nd->getGuid()!=nodes[i].getGuid()&&((nd->type == TAG_TYPE::OPEN && nodes[i].type == TAG_TYPE::CLOSE) 
-                    || (nd->type == TAG_TYPE::CLOSE && nodes[i].type == TAG_TYPE::OPEN)))
+            for (unsigned int i = 0; i < nodes.size(); ++i){
+                if(nd->tagsEqual(nodes[i].tag)&&nd->getGuid()!=nodes[i].getGuid()&&((nd->type == tag_type.OPEN && nodes[i].type == tag_type.CLOSE)
+                    || (nd->type == tag_type.CLOSE && nodes[i].type == tag_type.OPEN)))
                     return (&nodes[i]);
             }
-            return nullptr;
+            return 0;
         }
     private:
         bool do_validation() { // TO DO: add more complex validation than simple tag matching.
-            for (int i = 0; i < nodes.size(); ++i) {
-                if (nodes[i].hasMatchingTag() && findTagPair(&nodes[i]) == nullptr) { // Make sure there are matching open/close tag pairs.
-                    throw std::exception(("ERROR! Validation failed. Could not find matching tag pair for open/close tags: " + nodes[i].tag).c_str());
+            for (unsigned int i = 0; i < nodes.size(); ++i) {
+                if (nodes[i].hasMatchingTag() && findTagPair(&nodes[i])==0) { // Make sure there are matching open/close tag pairs.
+                    XML_EXCEPTION(("ERROR! Validation failed. Could not find matching tag pair for open/close tags: " + nodes[i].tag).c_str());
                 }
             }
             return (nodes.size()>0) ? true : false;
@@ -187,9 +170,8 @@ namespace XMLparser{
                 if (fin.eof()) { break; }
                 if(nodes.size()>0)
                     nodes.back().innerText = innerText;
-                bool hasBothBrackets = (str.find("<")!=std::string::npos && str.find(">")!=std::string::npos);
-                if (!hasBothBrackets) {
-                    throw std::exception("ERROR! Formatting of tag entry is corrupted.");
+                if (!(str.find("<") != std::string::npos && str.find(">") != std::string::npos)) {
+                    XML_EXCEPTION("ERROR! Formatting of tag entry is corrupted.");
                 }
                 nodes.push_back(XMLnode(str));
                 str = innerText = "";
@@ -198,10 +180,7 @@ namespace XMLparser{
         }
         void write_to_disk(const char* xml_filename, bool prettify) {
             std::ofstream fout(xml_filename, std::ios::out | std::ios::binary | std::ios::app);
-            for (auto nd : nodes) {
-                std::string str = nd.ToString();
-                fout.write(str.c_str(), str.size());
-            }
+            for (unsigned int i = 0; i < nodes.size();++i){ std::string str = nodes[i].ToString(); fout.write(str.c_str(), str.size()); }
             fout.close();
         }        
 	};
