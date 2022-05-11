@@ -2,12 +2,6 @@
 #include <iostream>
 #include <exception>
 int main(){
-	XMLparser_test::XMLparser_TESTS tests;
-	try {
-		tests.Run();
-	}
-	catch (std::exception e1) {
-		std::cout << e1.what() << std::endl;
-	}
-	return 0;
+	XMLparser_test::XMLparser_TESTS tests;	
+	tests.Run();
 }
