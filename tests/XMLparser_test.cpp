@@ -97,6 +97,40 @@ namespace XMLparser_test
 
 		return all_tests;
 	}
+	TEST_RESULTS XMLparser_TESTS::EntireDiskTest()
+	{
+		TEST_RESULTS result;
+		result.passed = true;
+		XMLparser::XMLparser xml;
+		std::string str = "";
+
+		try {
+			for (const auto& dirEntry : std::filesystem::recursive_directory_iterator("C:\\Program Files")) {
+				
+				try {
+					auto p = std::filesystem::status(dirEntry).permissions();
+				}
+				catch (std::exception e1) {
+					continue;
+				}
+
+				str = dirEntry.path().string();
+				if (str.rfind(".xml") != std::string::npos) {
+					std::cout << "parsing: " << dirEntry << std::endl;
+					result.start_time = clock();
+					xml.load(str.c_str(), true);
+					result.end_time = clock();
+					result.seconds += float(result.end_time - result.start_time) / 1000.0f;//elapsed seconds to parse file.
+					result.passed &= xml.check_validation();
+				}
+			}
+		}
+		catch (std::exception e1) {
+			std::cerr << e1.what() << std::endl;
+		}
+
+		return result;
+	}
 	TEST_RESULTS XMLparser_TESTS::FormatFailureTest(const char* filename_to_test)
 	{
 		TEST_RESULTS result;
@@ -144,7 +178,7 @@ namespace XMLparser_test
 			result.passed = xml.check_validation()&&xml.nodes.size()>3;
 		}
 		catch (std::exception e1) {
-			std::cerr << e1.what() << std::endl;
+			std::cerr << e1.what() << "\n*** Press ENTER to continue.****" << std::endl;
 			std::cin.get();
 		}
 
@@ -169,7 +203,7 @@ namespace XMLparser_test
 			result.passed = std::filesystem::exists(filename_to_test);
 		}
 		catch (std::exception e1) {
-			std::cerr << e1.what() << std::endl;
+			std::cerr << e1.what() << "\n*** Press ENTER to continue.****" << std::endl;
 			std::cin.get();
 		}
 
@@ -181,6 +215,7 @@ namespace XMLparser_test
 
 			std::vector<TEST_RESULTS> tests; 
 			
+			tests.push_back(EntireDiskTest());
 			tests.push_back(FormatFailureTest("SOpage.html"));
 			tests.push_back(ParseTest("cube_triangulate.dae"));
 			tests.push_back(ParseTest("BrainStem.dae"));
@@ -188,6 +223,7 @@ namespace XMLparser_test
 			tests.push_back(ParseTest("kawada-hironx.dae"));
 			tests.push_back(ParseTest("GeneratedByWord.xml"));
 			tests.push_back(ParseTest("SkinAndMorph.dae"));
+			tests.push_back(ParseTest("AMDAUEPInstaller.xml"));
 			tests.push_back(WriteToDiskTest("Test_3_XML.xml"));
 			tests.push_back(unitTests.RunAllTests());
 

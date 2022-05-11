@@ -34,6 +34,7 @@ namespace XMLparser_test {
 	private:
 
 		// Individual tests.
+		TEST_RESULTS EntireDiskTest();
 		TEST_RESULTS FormatFailureTest(const char* filename_to_test);
 		TEST_RESULTS ParseTest(const char* filename_to_test);
 		TEST_RESULTS WriteToDiskTest(const char* filename_to_test);
