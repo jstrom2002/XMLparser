@@ -23,164 +23,239 @@ SOFTWARE.*/
 #include <algorithm>
 #include <cstdlib>
 #include <fstream>
+#include <memory>
 #include <stdexcept>
 #include <sstream>
 #include <string>
 #include <vector>
 namespace XMLparser{
-    const struct TAG_TYPE { enum types : size_t {CLOSE=1u,COMMENT=2u,OPEN=3u,SELF_CLOSING=4u,XML_DEFINITION=5u,TAG_COUNT=6u};}tag_type;// replacement for enum which is not available in c++98, open=='<...>', close=='</...>', self-closing=='<.../>',comment=='<!-- ... -->',xml=='<?...?>' 0          
+#ifdef _WIN64
+    typedef uint64_t XMLuint;
+#else
+    typedef uint32_t XMLuint;
+#endif
+    XMLuint MAX_FILESIZE = 9999999999999u;
+    enum class TAG_TYPE{UNKNOWN,CLOSE,COMMENT,OPEN,SELF_CLOSING,UNIQUE,XML_DEFINITION,TAG_COUNT };// replacement for enum which is not available in c++98, open=='<...>', close=='</...>', self-closing=='<.../>',comment=='<!-- ... -->',xml=='<?...?>' 0          
     std::string toLower(std::string str) { for (size_t i = 0; i < str.length(); ++i) { str[i] = std::tolower(str[i]); } return str; }
-    std::string trimWhitespace(std::string str) { while (str[0] == ' ') { str = str.substr(1); }while (str[str.length() - 1] == ' ') { str = str.substr(0, str.length() - 1); }return str; }
-    std::string TAG_BEGINNINGS[(tag_type.TAG_COUNT)]{"","</","<!--","<","<","<?"};
-    std::string TAG_ENDINGS[tag_type.TAG_COUNT]{"",">","--!>",">","/>","?>"};
+    void trimWhitespace(std::string& str){while(str.length()>0&&str[0]==' '){str=str.substr(1);}while(str.length()>0&&str[str.length()-1]==' '){str=str.substr(0,str.length()-1);}}
+    std::string TAG_BEGINNINGS[int(TAG_TYPE::TAG_COUNT)]={"","</","<!--","<","<","<!","<?"};
+    std::string TAG_ENDINGS[int(TAG_TYPE::TAG_COUNT)]={"",">","-->",">","/>",">","?>"};
     void XML_EXCEPTION(std::string err_str) { throw std::invalid_argument(err_str.c_str()); }
+    bool hasUnclosedComment(const std::string& str){return str.length()>4&&str.find("<!--")!=std::string::npos&&str.rfind("-->")==std::string::npos;}
     class XMLattribute {
     public:
         std::string key, value;
         XMLattribute(std::string str){
+            key=value="";
             size_t eq = str.find("=");
-            if(eq==std::string::npos){key=str;value="";}
+            if(eq==std::string::npos){
+                XML_EXCEPTION("ERROR! Values for XML attributes must follow format 'key=value' for XML 1.0/1.1.");
+            }
             else{key=str.substr(0,eq);value=str.substr(eq+1,str.length()-eq-1);}
         }
         std::string ToString() { return key + "=" + value; }
-    private:
-        XMLattribute() { XML_EXCEPTION("ERROR! Cannot use default constructor."); }
+        bool validate() {return key.length()>0&&key[0]!='<'; }
     };
     class XMLnode{
     public:
         std::vector<XMLattribute> attributes;
-        std::string innerText,tag;
-        unsigned int type;
-        std::string getGuid() { return guid; }
-        bool hasMatchingTag() { return (type == tag_type.OPEN || type == tag_type.CLOSE); }
-        bool tagsEqual(const std::string& str) { return toLower(trimWhitespace(tag)) == toLower(trimWhitespace(str)); }
+        std::vector<std::shared_ptr<XMLnode>> children;
+        std::string innerText="", tag="";
+        std::shared_ptr<XMLnode> parent=nullptr;
+        TAG_TYPE type=TAG_TYPE::UNKNOWN;
+        std::string getGuid(){return guid;}
+        bool isOpenOrClose(){return (type==TAG_TYPE::OPEN||type==TAG_TYPE::CLOSE);}
+        bool tagsEqual(std::string str){ return toLower(tag)==toLower(str); }//tags of nodes are identical, which are case-insensitive.
+        bool exactMatch(std::shared_ptr<XMLnode> nd){return guid==nd->getGuid();}//nodes are exactly identical, same guid.
         std::string ToString() {
             std::string str = TAG_BEGINNINGS[int(type)]+(tag+(attributes.size()>0?" ":""));
-            for (unsigned int i=0;i<attributes.size();++i)
+            for (XMLuint i=0;i<attributes.size();++i)
                 str += (attributes[i].ToString()+((i<attributes.size() - 1)?" ":""));             
             return str+TAG_ENDINGS[int(type)]+innerText;
         }
-        XMLnode(const std::string& str) {
-            if (str.length() == 0) { // validation
-                XML_EXCEPTION("ERROR! Attempting to parse bad data to XML node entry.");
-            }
-            unsigned int pos = 0, start_pos = 0, end_pos = 0;
-            char next_char = 0;
+        bool validate() {
+            bool is_valid=tag.length()>0&&guid.length()>0&&type!=TAG_TYPE::UNKNOWN;
+            for (XMLuint i=0;i<attributes.size();++i)
+                is_valid &= attributes[i].validate();
+            return is_valid;
+        }
+        XMLnode(std::string str, std::shared_ptr<XMLnode> _parent=nullptr){
+            if (str.length()==0){XML_EXCEPTION("ERROR! Attempting to parse bad data to XML node entry.");}
+            genGuid();
+            parent = _parent;
+            XMLuint pos=0u,start_pos=0u,end_pos=0u;
+            char next_char = 0,curr_string_char=0;
             bool in_string = false;
             while (pos < str.length()) {// Split string by whitespace into values: first value is the tag, the rest are attributes. Last attribute has closing bracket.
                 start_pos = end_pos = pos;
                 next_char = str[pos];
                 pos++;
-                while ((next_char != ' ' || in_string == true) && pos < str.length()) {
+                while ((next_char != ' '||in_string==true) && pos < str.length()) {
                     next_char = str[pos];
                     end_pos = pos;
-                    if (next_char == '\'' || next_char == '\"')
+                    if (next_char == '\''){
                         in_string = !in_string;
+                        curr_string_char=in_string?next_char:0;
+                    }
+                    else if(curr_string_char!='\''&&next_char=='\"'){
+                        in_string = !in_string;
+                        curr_string_char=in_string?next_char:0;
+                    }
                     pos++;
                 }
-                if (tag.length() == 0)
-                    tag = str.substr(start_pos, end_pos - start_pos + 1);
-                else
-                    attributes.push_back(XMLattribute(str.substr(start_pos, end_pos - start_pos + 1)));
+                if(tag.length()==0){
+                    tag=str.substr(start_pos,end_pos-start_pos+1);
+                    trimWhitespace(tag);
+                    if(tag.find("<!--")!=std::string::npos){tag="";type=TAG_TYPE::COMMENT;return;}
+                }
+                else {
+                    std::string attr_str=str.substr(start_pos, end_pos-start_pos+1);
+                    trimWhitespace(attr_str);
+                    attributes.push_back(XMLattribute(attr_str));
+                }
             }
-            if (tag.find("<?") != std::string::npos) // identify type
-                type = tag_type.XML_DEFINITION;
-            else if (tag.find("<!--") != std::string::npos)
-                type = tag_type.COMMENT;
-            else if (tag.find("</") != std::string::npos)
-                type = tag_type.CLOSE;
-            else if (tag.find("/>") != std::string::npos || (attributes.size() > 0 && attributes[attributes.size() - 1].value.find("/>") != std::string::npos))
-                type = tag_type.SELF_CLOSING;
-            else if (tag.find("<") != std::string::npos)
-                type = tag_type.OPEN;
+            typeFromTag();
             std::string* first_str = &tag; // remove tag bracket surroundings
             std::string* last_str = (attributes.size() > 0) ? &attributes[attributes.size() - 1].value : &tag;
             if (first_str->find(TAG_BEGINNINGS[int(type)]) != std::string::npos)
                 *first_str = first_str->substr(TAG_BEGINNINGS[int(type)].length(),first_str->length() - TAG_BEGINNINGS[int(type)].length());
             if (last_str->find(TAG_ENDINGS[int(type)]) != std::string::npos)
                 *last_str = last_str->substr(0,last_str->length() - TAG_ENDINGS[int(type)].length());
-            genGuid();
         }
     private:
-        std::string guid = "";//to maintain node uniqueness, a guid is necessary for strict matching
+        void typeFromTag() {
+            if(type!=TAG_TYPE::UNKNOWN)
+                return;
+            if (tag.find("<!--") != std::string::npos){type=TAG_TYPE::COMMENT;}
+            else if (tag.find("<?") != std::string::npos){type=TAG_TYPE::XML_DEFINITION;}
+            else if (tag.find("</") != std::string::npos){type=TAG_TYPE::CLOSE;}
+            else if (tag.find("<!") != std::string::npos){type=TAG_TYPE::UNIQUE;}
+            else if (tag.find("/>") != std::string::npos || (attributes.size() > 0 && attributes[attributes.size() - 1].value.find("/>") != std::string::npos))
+                type=TAG_TYPE::SELF_CLOSING;
+            else if (tag.find("<") != std::string::npos){type=TAG_TYPE::OPEN;}
+        }
+        std::string guid;//for node uniqueness
         void genGuid(){
-            guid.clear(); guid.reserve(26); char c;
+            guid.clear(); guid.resize(26,' '); char c;
             for (int i = 0; i < 26; ++i) {
                 c = '-';
                 if (i != 9 && i != 14) {
                     c = (char)(rand() % 16) + 48;
                     if (c >= 58) { c += 7; }
                 }
-                guid.push_back(c);
+                guid[i]=(c);
             }
         }
     };
 	class XMLparser{
 	public:
-        std::vector<XMLnode> nodes;
+        std::vector<std::shared_ptr<XMLnode>> nodes;
         void load(const char* xml_filename, bool remove_formatting = true) { parse(xml_filename, remove_formatting); }
-        void save(const char* xml_filename, bool prettify = true) { write_to_disk(xml_filename, prettify); }
+        //void prettify() { do_prettification(); }
+        void save(const char* xml_filename) { write_to_disk(xml_filename); }
         bool check_validation() { return do_validation(); }
-        std::vector<XMLnode*> find(std::string tag) {
-            std::vector<XMLnode*> nds;
+        std::vector<std::shared_ptr<XMLnode>> find(std::string tag) {
+            std::vector<std::shared_ptr<XMLnode>> nds;
             if (tag.length() == 0)
                 return nds;
-            for (unsigned int i=0;i<nodes.size();++i) {
-                if (nodes[i].tagsEqual(tag))
-                    nds.push_back(&nodes[i]);
+            for (XMLuint i=0;i<nodes.size();++i) {
+                if (nodes[i]->tagsEqual(tag))
+                    nds.push_back(nodes[i]);
             }
             return nds;
         }
-        XMLnode* findTagPair(XMLnode* nd) {
-            for (unsigned int i = 0; i < nodes.size(); ++i){
-                if(nd->tagsEqual(nodes[i].tag)&&nd->getGuid()!=nodes[i].getGuid()&&((nd->type == tag_type.OPEN && nodes[i].type == tag_type.CLOSE)
-                    || (nd->type == tag_type.CLOSE && nodes[i].type == tag_type.OPEN)))
-                    return (&nodes[i]);
+        std::shared_ptr<XMLnode> findTagPair(std::shared_ptr<XMLnode> nd) {
+            if (!nd->isOpenOrClose())
+                return nullptr;
+            int inc=(nd->type==TAG_TYPE::CLOSE)?-1:1;
+            for (XMLuint i=0u;i<nodes.size();++i){
+                if (nd->exactMatch(nodes[i])){
+                    int level=(nd->type==TAG_TYPE::CLOSE)?-1:1;
+                    for (int j=(int)i+inc;j<(int)nodes.size()&&j>=0;j+=inc){
+                        if(nodes[j]->isOpenOrClose()){level+=(nodes[j]->type==TAG_TYPE::CLOSE)?-1:1;}
+                        if (level==0&&nd->tagsEqual(nodes[j]->tag)&&nd->exactMatch(nodes[j])==false&&
+                            ((nd->type == TAG_TYPE::OPEN && nodes[j]->type == TAG_TYPE::CLOSE) || (nd->type == TAG_TYPE::CLOSE && nodes[j]->type == TAG_TYPE::OPEN))
+                          )
+                            return nodes[j];                        
+                    }
+                    break;
+                }
             }
             return 0;
         }
     private:
         bool do_validation() { // TO DO: add more complex validation than simple tag matching.
-            for (unsigned int i = 0; i < nodes.size(); ++i) {
-                if (nodes[i].hasMatchingTag() && findTagPair(&nodes[i])==0) { // Make sure there are matching open/close tag pairs.
-                    XML_EXCEPTION(("ERROR! Validation failed. Could not find matching tag pair for open/close tags: " + nodes[i].tag).c_str());
+            for (XMLuint i = 0; i < nodes.size(); ++i) {
+                if (nodes[i]->tag.find("<") != std::string::npos || nodes[i]->tag.find(">") != std::string::npos) {//make sure tags have no angle brackets any more
+                    XML_EXCEPTION("ERROR! Formatting of tag entry is corrupted: " + nodes[i]->tag);
+                }
+                if (nodes[i]->isOpenOrClose()){ // validation for open/close tag pairs
+                    std::shared_ptr<XMLnode> pair=findTagPair(nodes[i]);
+                    if (pair==nullptr) { // Make sure there are matching open/close tag pairs.
+                        XML_EXCEPTION(("ERROR! Validation failed. Could not find matching tag pair for open/close tags: " + nodes[i]->tag).c_str());
+                    }
+                    if (pair->parent != nodes[i]->parent) { // make sure node tree relationship is preserved from file.
+
+                        XML_EXCEPTION(("ERROR! Validation failed. Node tree relationship mismatching for open/close tags: " + nodes[i]->tag).c_str());
+                    }
                 }
             }
             return (nodes.size()>0) ? true : false;
         }
+        void do_prettification() {// destructive op to remove whitespace and other unnecessary values from XML
+            //if (& str.find("\r\n") == std::string::npos) { str.append("\r\n"); }
+        }
         void parse(const char* xml_filename, bool remove_formatting){//iterate over all tags in file saving position of < and > as ints
             srand(clock());//fully randomize guids
-            std::ifstream fin(xml_filename, std::ios::in | std::ios::binary);
-            char curr_char = 0;
-            std::string innerText="";
-            std::string str="";
-            while (true) {
+            std::ifstream fin(xml_filename, std::ios::in | std::ios::binary);            
+            XMLuint fsize = fin.tellg();
+            fin.seekg(0, std::ios::end);
+            fsize = (XMLuint)(fin.tellg()) - fsize;// get filesize
+            if (fsize > MAX_FILESIZE)
+                XML_EXCEPTION("ERROR! File cannot be parsed because it is too large for memory to hold.");
+            fin.seekg(0, std::ios::beg);
+            char curr_char=0;
+            bool in_comment=false;
+            std::string innerText,str;
+            std::shared_ptr<XMLnode> curr_parent=nullptr;
+            while (true){
                 if (fin.eof()) { break; }
-                while (curr_char != '<' && !fin.eof()) {
-                    if(curr_char != '<' && curr_char != '>' && (!remove_formatting || curr_char >= 32) )
-                        innerText += curr_char;
+                while (curr_char!='<'&&!fin.eof()){
+                    if (curr_char!='<'&&curr_char!='>')
+                        innerText += curr_char;                    
                     fin.get(curr_char);
                 }
                 if (fin.eof()) { break; }
                 str += curr_char;
-                while (curr_char != '>' && !fin.eof()) {
+                while((curr_char!='>'||in_comment)&&!fin.eof()){
                     fin.get(curr_char);
                     str += curr_char;
-                }
+                    in_comment=hasUnclosedComment(str)?true:false;
+                } 
                 if (fin.eof()) { break; }
                 if(nodes.size()>0)
-                    nodes.back().innerText = innerText;
-                if (!(str.find("<") != std::string::npos && str.find(">") != std::string::npos)) {
-                    XML_EXCEPTION("ERROR! Formatting of tag entry is corrupted.");
+                    nodes.back()->innerText=innerText;
+                str.shrink_to_fit();
+                std::shared_ptr<XMLnode> nd=std::make_shared<XMLnode>(str, curr_parent);
+                if(nd->type!=TAG_TYPE::COMMENT){nodes.push_back(nd);}
+                else{nd->tag=nd->innerText="";}
+                if(curr_parent==nullptr&&nd->type==TAG_TYPE::OPEN){curr_parent=nodes.back();}//initialization
+                if (curr_parent != nullptr && nodes.back()->exactMatch(curr_parent)==false&&nd->type!=TAG_TYPE::CLOSE) { //assign children
+                    curr_parent->children.push_back(nodes.back()); }
+                if(nodes.back()->type==TAG_TYPE::OPEN){curr_parent=nodes.back();}//make current node the parent
+                else if (nodes.back()->type == TAG_TYPE::CLOSE) {//backtrack
+                    std::shared_ptr<XMLnode> match_nd = findTagPair(nodes.back());
+                    if(match_nd){curr_parent=match_nd->parent;nodes.back()->parent=curr_parent;}
                 }
-                nodes.push_back(XMLnode(str));
-                str = innerText = "";
+                //else{curr_parent=nullptr;}
+                str = innerText = ""; 
+                in_comment = false;
             }
             fin.close();
         }
-        void write_to_disk(const char* xml_filename, bool prettify) {
+        void write_to_disk(const char* xml_filename) {
             std::ofstream fout(xml_filename, std::ios::out | std::ios::binary | std::ios::app);
-            for (unsigned int i = 0; i < nodes.size();++i){ std::string str = nodes[i].ToString(); fout.write(str.c_str(), str.size()); }
+            for (XMLuint i = 0; i < nodes.size(); ++i) { std::string str = nodes[i]->ToString();fout.write(str.c_str(), str.size()); }
             fout.close();
         }        
 	};
