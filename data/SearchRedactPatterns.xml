@@ -1,0 +1,82 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no" ?>
+<!DOCTYPE asf SYSTEM "http://ns.adobe.com/asf/asf_1_0.dtd">
+<asf locale="en_US" version="1.0" xmlns="http://ns.adobe.com/asf">
+<set name="Entry1">
+<str name="displayName">
+<val>Phone Numbers</val>
+</str>
+<str name="regEx" translate="no">
+<val>(\b\s?)((\+?\d{1}(-|\s|\.|_))((\(\d{3}\)|\d{3})(-|\s|\.|_)?)|((\(\d{3}\)|\d{3})(-|\s|\.|_)?))?(\d{3}(-|\s|\.|_)\d{4})(\b)</val>
+</str>
+<str name="examples">
+<val>This pattern will search for 7-digit phone numbers separated by punctuation marks, as well as leading area codes.
+
+For example:
+555-1212
+212.555.1212
+1 (212) 555-1212</val>
+</str>
+</set>
+<set name="Entry2">
+<str name="displayName">
+<val>Credit Cards</val>
+</str>
+<str name="regEx" translate="no">
+<val>(\b)(((\d{4}(-|\s|\.|_)?){3}(\d{3,4}))|(\d{4}(-|\s|\.|_)?\d{6}(-|\s|\.|_)?\d{5}))(\b)</val>
+</str>
+<str name="examples">
+<val>This pattern will search for 16-digit credit card numbers, either consecutive or separated by punctuation marks.
+
+For example:
+1234-5678-9012-3456
+1234567890123456
+1234 5678 9012 3456</val>
+</str>
+</set>
+<set name="Entry3">
+<str name="displayName">
+<val>Social Security Numbers</val>
+</str>
+<str name="regEx" translate="no">
+<val>(\b)(((\d{3}(-|\s|\.|_)){2}\d{3})|(\d{9}))(\b)</val>
+</str>
+<str name="examples">
+<val>This pattern will search for 9-digit social insurance numbers, either consecutive or 3 digits plus 3 digits plus 3 digits (separated by punctuation marks).
+
+For example:
+123-456-789
+123456789
+123 456 789</val>
+</str>
+</set>
+<set name="Entry4">
+<str name="displayName">
+<val>Email Addresses</val>
+</str>
+<str name="regEx" translate="no">
+<val>([a-zA-Z0-9_])([a-zA-Z0-9_\-\.])*@([a-zA-Z0-9\-])+\.([a-zA-Z\.]+)</val>
+</str>
+<str name="examples">
+<val>This pattern will search for email addresses.
+
+For example:
+John.Doe@acme.com
+John_Doe_1234@acme.gov
+j-doe@marketing.acme.net</val>
+</str>
+</set>
+<set name="Entry5">
+<str name="displayName">
+<val>Dates</val>
+</str>
+<str name="regEx" translate="no">
+<val>(\b)(((\d{2}(\||\-|\.|\s|\\|/|_)){2}\d{2}(\d{2})?)|(\d{4}((\||\-|\.|\s|\\|/|_)\d{2}){2})|(\d{6}(\d{2})?))(\b)</val>
+</str>
+<str name="examples">
+<val>This pattern will search for 6-8 digit numbers, either consecutive or separated by punctuation marks. For example: 
+01-01-2008
+2008-01-01
+01-01-08 </val>
+</str>
+</set>
+</asf>

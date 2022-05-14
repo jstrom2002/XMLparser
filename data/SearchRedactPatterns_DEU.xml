@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8" standalone="no" ?><!DOCTYPE asf SYSTEM "http://ns.adobe.com/asf/asf_1_0.dtd"><asf locale="en_US" version="1.0" xmlns="http://ns.adobe.com/asf">
+<set name="Entry1">
+<str name="displayName" translate="yes">
+<val>Telefonnummern</val>
+</str>
+<str name="regEx" translate="yes">
+<val>(\b\s?)((\(0\d{2}\)\s?)|(((\+|(00\.?))\d{2}(\s|\.))?((0|(\(0\)))?\d{2}(\s|/|\.))))?(((\d{3})(\s|\.)?(\d{4}))|((\d{2}(\s|\.)?){2}\d{2}(\s|\.)?\d))(\b)</val>
+</str>
+<str name="examples" translate="yes">
+<val>Anhand dieses Musters wird nach durch Leerzeichen oder Punkte getrennten bzw. durchgehend angegebenen Telefonnummern mit und ohne Vorwahl gesucht.
+
+Beispiele:
+95 56 899
+(030)9556599
+030 95 56899</val>
+</str>
+</set>
+<set name="Entry2">
+<str name="displayName" translate="yes">
+<val>Kreditkarten</val>
+</str>
+<str name="regEx" translate="yes">
+<val>(\b)((\d{4}(-|\s|\.|_)?){3}\d{4})(\b)</val>
+</str>
+<str name="examples" translate="yes">
+<val>Anhand dieses Musters wird nach 16-stelligen, durch Leerzeichen oder Bindestriche getrennten bzw. durchgehend angegebenen Kreditkartennummern gesucht.
+
+Beispiele:
+1234-5678-9012-3456
+1234567890123456
+1234 5678 9012 3456</val>
+</str>
+</set>
+<set name="Entry3">
+<str name="displayName" translate="yes">
+<val>Nationale Personenkennnummern</val>
+</str>
+<str name="regEx" translate="yes">
+<val>(\b)(\d{8}([a-zA-Z])\d{3})(\b)</val>
+</str>
+<str name="examples" translate="yes">
+<val>Anhand dieses Musters wird nach zwölfstelligen, aus Buchstaben und Ziffern bestehenden Rentenversicherungsnummern gesucht (darf keine Leerzeichen enthalten).
+
+Beispiele:
+65170839J003 
+65170839J008</val>
+</str>
+</set>
+<set name="Entry4">
+<str name="displayName" translate="yes">
+<val>E-Mail-Adressen</val>
+</str>
+<str name="regEx" translate="yes">
+<val>([a-zA-Z0-9_])([a-zA-Z0-9_\-\.])*@([a-zA-Z0-9\-])+\.([a-zA-Z\.]+)</val>
+</str>
+<str name="examples" translate="yes">
+<val>Mit diesem Muster wird nach E-Mail-Adressen gesucht.
+
+Hans.Mueller@firma.de
+Hans_Mueller_1205@firma.org
+H_mueller@marketing.firma.de</val>
+</str>
+</set>
+<set name="Entry5">
+<str name="displayName" translate="yes">
+<val>Datumsangaben</val>
+</str>
+<str name="regEx" translate="yes">
+<val>(\b)(((\d{1,2}(\||\-|\.|\s|\\|/|_)){2}\d{2}(\d{2})?)|(\d{1,2}(st|nd|rd|th)?(\||\-|\.|\s|\\|/|_)(jan|feb|mr|apr|mai|jun|jul|aug|sep|okt|nov|dez|januar|februar|märz|april|juni|juli|august|september|oktober|november|dezember)((\||\-|\.|\s|\\|/|_|,)(\||\-|\.|\s|\\|/|_)?\d{2}(\d{2})?)?)|((jan|feb|mär|apr|mai|juni|juli|aug|sep|okt|nov|dez|januar|februar|märz|april|juni|juli|august|september|oktober|november|dezember)(\||\-|\.|\s|\\|/|_)\d{1,2}(st|nd|rd|th)?((\||\-|\.|\s|\\|/|_|,)(\||\-|\.|\s|\\|/|_)?\d{2}(\d{2})?)?)|(\d{2}(\d{2})?((\||\-|\.|\s|\\|/|_)\d{1,2}){2}))(\b)</val>
+</str>
+<str name="examples" translate="yes">
+<val>1. Numerische Tages-, Monats- und Jahresangabe getrennt durch Schrägstrich 
+12/06/2008
+
+2. Numerische Tages-, Monats- und Jahresangabe getrennt durch Punkt
+12.06.2008
+
+3. Monatsangabe als Name (vollständig oder Abkürzung)
+6 Juni 2008
+12 Feb. 1998</val>
+</str>
+</set>
+</asf>
