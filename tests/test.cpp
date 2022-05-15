@@ -2,6 +2,6 @@
 #include <iostream>
 #include <exception>
 int main(){
-	XMLparser_test::XMLparser_TESTS tests;	
+	XMLparser_test::XMLparserTestEnvironment tests(false);
 	tests.Run();
 }

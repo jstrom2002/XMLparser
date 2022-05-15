@@ -5,10 +5,14 @@
 #include <Windows.h>
 #include <io.h>
 #include <fcntl.h>
+#include <cstdint>
+#include <typeinfo>
+
 
 namespace XMLparser_test
 {
-	TEST_RESULTS UnitTests::NodeConstructorTest(){
+
+	XMLparserTestEnvironment::TEST_RESULTS XMLparserTestEnvironment::UnitTests::NodeConstructorTest(){
 		TEST_RESULTS result;
 		result.passed = true;
 		XMLparser::XMLstring test_str = L"<?xml sdljk=\"2\" version=\'\"fake_v alue \" is \"test value\"\'?>";
@@ -29,7 +33,8 @@ namespace XMLparser_test
 
 		result.seconds = float(result.end_time - result.start_time) / 1000.0f;//elapsed seconds to parse file.
 
-		std::cout << "\n\n\n===============\nNode constructor unit test finished in " << result.seconds << " sec\n\n" << std::endl;
+		if(env.print_output)
+			std::cout << "\n\n\n===============\nNode constructor unit test finished in " << result.seconds << " sec\n\n" << std::endl;
 
 		if (!result.passed) {
 			throw std::exception("\n\nERROR! Node constructor test failed.");
@@ -37,8 +42,8 @@ namespace XMLparser_test
 
 		return result;
 	}
-	TEST_RESULTS UnitTests::ToLowerTest(){
-		TEST_RESULTS result;
+	XMLparserTestEnvironment::TEST_RESULTS XMLparserTestEnvironment::UnitTests::ToLowerTest(){
+		XMLparserTestEnvironment::TEST_RESULTS result;
 		result.passed = true;
 		XMLparser::XMLstring test_str = L" ; test. vaLuE     ";
 
@@ -56,11 +61,12 @@ namespace XMLparser_test
 			throw std::exception("\n\nERROR! toLower() test failed.");
 		}
 
-		std::cout << "\n\n\n===============\ntoLower() unit test finished in " << result.seconds << " sec\n\n" << std::endl;
+		if (env.print_output)
+			std::cout << "\n\n\n===============\ntoLower() unit test finished in " << result.seconds << " sec\n\n" << std::endl;
 		return result;
 	}
-	TEST_RESULTS UnitTests::TrimWhitespaceTest(){
-		TEST_RESULTS result;
+	XMLparserTestEnvironment::TEST_RESULTS XMLparserTestEnvironment::UnitTests::TrimWhitespaceTest(){
+		XMLparserTestEnvironment::TEST_RESULTS result;
 		result.passed = true;
 		XMLparser::XMLstring test_str = L" ; test. vaLuE     ";
 
@@ -78,11 +84,12 @@ namespace XMLparser_test
 			throw std::exception("\n\nERROR! trimWhitespace() test failed.");
 		}
 
-		std::cout << "\n\n\n===============\ntrimWhitespace() unit test finished in " << result.seconds << " sec\n\n" << std::endl;
+		if (env.print_output)
+			std::cout << "\n\n\n===============\ntrimWhitespace() unit test finished in " << result.seconds << " sec\n\n" << std::endl;
 		return result;
 	}
-	TEST_RESULTS UnitTests::RunAllTests() {
-		std::vector<TEST_RESULTS> tests;
+	XMLparserTestEnvironment::TEST_RESULTS XMLparserTestEnvironment::UnitTests::RunAllTests() {
+		std::vector<XMLparserTestEnvironment::TEST_RESULTS> tests;
 		
 		try {
 			tests.push_back(NodeConstructorTest());
@@ -99,15 +106,14 @@ namespace XMLparser_test
 			all_tests.seconds += tests[i].seconds;
 		}
 
-		if(all_tests.passed)
+		if(all_tests.passed&&env.print_output)
 			std::cout << "\n\n\n===============\nAll unit tests finished in " << all_tests.seconds << " sec\n\n" << std::endl;
 
 
 		return all_tests;
 	}
-	TEST_RESULTS XMLparser_TESTS::BOMformatFailureTest(const char* filename_to_test)
-	{
-		TEST_RESULTS result;
+	XMLparserTestEnvironment::TEST_RESULTS XMLparserTestEnvironment::BOMformatFailureTest(const char* filename_to_test){
+		XMLparserTestEnvironment::TEST_RESULTS result;
 
 		try {
 
@@ -116,8 +122,9 @@ namespace XMLparser_test
 			xml.load(filename_to_test);
 			result.end_time = clock();
 			result.seconds = float(result.end_time - result.start_time) / 1000.0f;//elapsed seconds to parse file.
-			std::cout << "\n\n\n===============\nIncorrectly formatted file " << filename_to_test << " parsed successfully despite bad formatting "
-				<< result.seconds << " sec\n\n" << std::endl;
+			if (print_output)
+				std::cout << "\n\n\n===============\nIncorrectly formatted file " << filename_to_test << " parsed successfully despite bad formatting "
+					<< result.seconds << " sec\n\n" << std::endl;
 			result.passed = xml.validate();
 			throw new std::exception("ERROR! html formatted file should not have been successfully parsed by XMLparser lib.");
 		}
@@ -130,7 +137,7 @@ namespace XMLparser_test
 
 		return result;
 	}
-	TEST_RESULTS XMLparser_TESTS::EntireDiskTest()
+	XMLparserTestEnvironment::TEST_RESULTS XMLparserTestEnvironment::EntireDiskTest()
 	{
 		TEST_RESULTS result;
 		result.passed = true;
@@ -160,7 +167,8 @@ namespace XMLparser_test
 						continue;
 					}
 
-					std::cout << "parsing: " << str << std::endl;
+					if (print_output)
+						std::cout << "parsing: " << str << std::endl;
 					result.start_time = clock();
 					xml.load(str.c_str());
 					result.end_time = clock();
@@ -175,9 +183,9 @@ namespace XMLparser_test
 
 		return result;
 	}
-	TEST_RESULTS XMLparser_TESTS::FormatFailureTest(const char* filename_to_test)
+	XMLparserTestEnvironment::TEST_RESULTS XMLparserTestEnvironment::FormatFailureTest(const char* filename_to_test)
 	{
-		TEST_RESULTS result;
+		XMLparserTestEnvironment::TEST_RESULTS result;
 
 		try {
 
@@ -186,8 +194,9 @@ namespace XMLparser_test
 			xml.load(filename_to_test);
 			result.end_time = clock();
 			result.seconds = float(result.end_time - result.start_time) / 1000.0f;//elapsed seconds to parse file.
-			std::cout << "\n\n\n===============\nIncorrectly formatted file " << filename_to_test << " parsed successfully despite bad formatting " 
-				<< result.seconds << " sec\n\n" << std::endl;
+			if (print_output)
+				std::cout << "\n\n\n===============\nIncorrectly formatted file " << filename_to_test << " parsed successfully despite bad formatting "
+					<< result.seconds << " sec\n\n" << std::endl;
 			result.passed = xml.validate();
 			throw new std::exception("ERROR! html formatted file should not have been successfully parsed by XMLparser lib.");
 		}
@@ -200,7 +209,7 @@ namespace XMLparser_test
 
 		return result;
 	}
-	TEST_RESULTS XMLparser_TESTS::NodePairTest(const char* filename_to_test)
+	XMLparserTestEnvironment::TEST_RESULTS XMLparserTestEnvironment::NodePairTest(const char* filename_to_test)
 	{
 		TEST_RESULTS result;
 
@@ -209,12 +218,14 @@ namespace XMLparser_test
 			XMLparser::XMLparser xml;
 			xml.load(filename_to_test);
 			result.end_time = clock();
-			xml.printToConsole();
+			if (print_output)
+				xml.printToConsole();
 			result.seconds = float(result.end_time - result.start_time) / 1000.0f;//elapsed seconds to parse file.
 
 
-			std::cout << "\n\n\n===============\nXML file with potential node pair errors " << filename_to_test << " parsed successfully in " 
-				<< result.seconds << " sec\n\n" << std::endl;
+			if (print_output)
+				std::cout << "\n\n\n===============\nXML file with potential node pair errors " << filename_to_test << " parsed successfully in "
+					<< result.seconds << " sec\n\n" << std::endl;
 			result.passed = xml.validate()&&xml.nodes.size()>3;
 		}
 		catch (std::exception e1) {
@@ -224,7 +235,31 @@ namespace XMLparser_test
 
 		return result;
 	}
-	TEST_RESULTS XMLparser_TESTS::ParseTest(const char* filename_to_test)
+	XMLparserTestEnvironment::TEST_RESULTS XMLparserTestEnvironment::ParseTest(const char* filename_to_test)
+	{
+		TEST_RESULTS result;
+		XMLparser::XMLparser xml;
+
+		try {
+			result.start_time = clock();
+			xml.load(filename_to_test);
+			result.end_time = clock();
+			result.seconds = float(result.end_time - result.start_time) / 1000.0f;//elapsed seconds to parse file.
+			if (print_output) {
+				xml.printToConsole();
+				std::cout << "\n\n\n===============\nXML file " << std::string(filename_to_test) << " parsed successfully with " <<
+					(int)xml.nodes.size() << " nodes in " << result.seconds << " sec\n\n" << std::endl;
+			}
+			result.passed = xml.validate();
+		}
+		catch (std::exception e1) {
+			std::cerr << e1.what() << "\n*** Press ENTER to continue.****" << std::endl;
+			std::cin.get();
+		}
+
+		return result;
+	}
+	XMLparserTestEnvironment::TEST_RESULTS XMLparserTestEnvironment::UTFformattingTest(const char* filename_to_test)
 	{
 		TEST_RESULTS result;
 
@@ -234,9 +269,10 @@ namespace XMLparser_test
 			xml.load(filename_to_test);
 			result.end_time = clock();
 			result.seconds = float(result.end_time - result.start_time) / 1000.0f;//elapsed seconds to parse file.
-			xml.printToConsole();
-			std::cout << "\n\n\n===============\nXML file " << filename_to_test << " parsed successfully in " 
-				<< result.seconds << " sec\n\n" << std::endl;
+
+			if (print_output)
+				std::cout << "\n\n\n===============\nXML file with UTF-16 formatting " << filename_to_test << " parsed successfully in "
+					<< result.seconds << " sec\n\n" << std::endl;
 			result.passed = xml.validate()&&xml.nodes.size()>3;
 		}
 		catch (std::exception e1) {
@@ -246,29 +282,7 @@ namespace XMLparser_test
 
 		return result;
 	}
-	TEST_RESULTS XMLparser_TESTS::UTFformattingTest(const char* filename_to_test)
-	{
-		TEST_RESULTS result;
-
-		try {
-			result.start_time = clock();
-			XMLparser::XMLparser xml;
-			xml.load(filename_to_test);
-			result.end_time = clock();
-			result.seconds = float(result.end_time - result.start_time) / 1000.0f;//elapsed seconds to parse file.
-
-			std::cout << "\n\n\n===============\nXML file with UTF-16 formatting " << filename_to_test << " parsed successfully in " 
-				<< result.seconds << " sec\n\n" << std::endl;
-			result.passed = xml.validate()&&xml.nodes.size()>3;
-		}
-		catch (std::exception e1) {
-			std::cerr << e1.what() << "\n*** Press ENTER to continue.****" << std::endl;
-			std::cin.get();
-		}
-
-		return result;
-	}
-	TEST_RESULTS XMLparser_TESTS::WriteToDiskTest(const char* filename_to_test)
+	XMLparserTestEnvironment::TEST_RESULTS XMLparserTestEnvironment::WriteToDiskTest(const char* filename_to_test)
 	{
 		TEST_RESULTS result;
 		XMLparser::XMLparser xml;
@@ -280,7 +294,8 @@ namespace XMLparser_test
 			result.end_time = clock();
 			result.seconds = float(result.end_time - result.start_time) / 1000.0f;//elapsed seconds to parse file.
 
-			std::cout << "\n\n\n===============\nXML file saved in " << result.seconds << " sec\n\n" << std::endl;
+			if (print_output)
+				std::cout << "\n\n\n===============\nXML file saved in " << result.seconds << " sec\n\n" << std::endl;
 			result.passed = std::filesystem::exists(filename_to_test);
 		}
 		catch (std::exception e1) {
@@ -290,7 +305,7 @@ namespace XMLparser_test
 
 		return result;
 	}
-	TEST_RESULTS XMLparser_TESTS::XMLredefinitionTest(const char* filename_to_test)
+	XMLparserTestEnvironment::TEST_RESULTS XMLparserTestEnvironment::XMLredefinitionTest(const char* filename_to_test)
 	{
 		TEST_RESULTS result;
 
@@ -300,9 +315,11 @@ namespace XMLparser_test
 			xml.load(filename_to_test);
 			result.end_time = clock();
 			result.seconds = float(result.end_time - result.start_time) / 1000.0f;//elapsed seconds to parse file.
-			xml.printToConsole();
-			std::cout << "\n\n\n===============\nXML file with potential XML definition tag parsing error " << filename_to_test << " parsed successfully in "
-				<< result.seconds << " sec\n\n" << std::endl;
+			if (print_output) {
+				xml.printToConsole();
+				std::cout << "\n\n\n===============\nXML file with potential XML definition tag parsing error " << filename_to_test << " parsed successfully in "
+					<< result.seconds << " sec\n\n" << std::endl;
+			}
 			result.passed = xml.validate();
 		}
 		catch (std::exception e1) {
@@ -312,7 +329,7 @@ namespace XMLparser_test
 
 		return result;
 	}
-	TEST_RESULTS XMLparser_TESTS::RunAllTests(){
+	XMLparserTestEnvironment::TEST_RESULTS XMLparserTestEnvironment::RunAllTests(){
 
 		TEST_RESULTS all_tests;
 
@@ -320,30 +337,32 @@ namespace XMLparser_test
 
 			
 
-		tests.push_back(EntireDiskTest());
+		//tests.push_back(EntireDiskTest());
 			
 		//tests.push_back(BOMformatFailureTest("AMDUWPLauncher.xml"));
 			 
 		//tests.push_back(FormatFailureTest("SOpage.html"));
 			
-		//tests.push_back(ParseTest("cube_triangulate.dae"));
-		//tests.push_back(ParseTest("BrainStem.dae"));
-		//tests.push_back(ParseTest("abb_irb52_7_120.dae"));
-		//tests.push_back(ParseTest("kawada-hironx.dae"));
-		//tests.push_back(ParseTest("SkinAndMorph.dae"));
+		tests.push_back(ParseTest("cube_triangulate.dae"));
+		tests.push_back(ParseTest("BrainStem.dae"));
+		tests.push_back(ParseTest("abb_irb52_7_120.dae"));
+		tests.push_back(ParseTest("kawada-hironx.dae"));
+		tests.push_back(ParseTest("SkinAndMorph.dae"));
 
-		//tests.push_back(XMLredefinitionTest("GeneratedByWord.xml"));
+		tests.push_back(XMLredefinitionTest("GeneratedByWord.xml"));
 
-		//tests.push_back(UTFformattingTest("SearchRedactPatterns.xml"));
-		//tests.push_back(UTFformattingTest("SearchRedactPatterns_DEU.xml"));
-		//tests.push_back(UTFformattingTest("AMDAUEPInstaller.xml"));
+		tests.push_back(UTFformattingTest("SearchRedactPatterns.xml"));
+		tests.push_back(UTFformattingTest("SearchRedactPatterns_DEU.xml"));
+		tests.push_back(UTFformattingTest("AMDAUEPInstaller.xml"));
 			
-		//tests.push_back(NodePairTest("BuildHighlights.xml"));
-		//tests.push_back(NodePairTest("MonetRSA.xml"));
-		//
-		//tests.push_back(WriteToDiskTest("Test_3_XML.xml"));
+		tests.push_back(NodePairTest("BuildHighlights.xml"));
+		tests.push_back(NodePairTest("MonetRSA.xml"));
+		
+		tests.push_back(WriteToDiskTest("Test_3_XML.xml"));
 			
 		//tests.push_back(unitTests.RunAllTests());
+
+
 
 
 
@@ -352,10 +371,12 @@ namespace XMLparser_test
 			all_tests.seconds += test.seconds;
 		}
 
-		if (all_tests.passed)
-			std::cout << "\n\n\n=========ALL TESTS PASSED\n==============\n" << std::endl;
-		else
-			std::cout << "\n\n===========ERROR! Not all tests passed. Step through to find failed tests." << std::endl;
+		if(print_output){
+			if (all_tests.passed)			
+				std::cout << "\n\n\n=========ALL TESTS PASSED\n==============\n" << std::endl;
+			else
+				std::cout << "\n\n===========ERROR! Not all tests passed. Step through to find failed tests." << std::endl;
+		}
 
 		return all_tests;
 	}

@@ -1,35 +1,42 @@
 #pragma once
 #include <time.h>
+#include <memory>
 
 namespace XMLparser_test {
-	struct TEST_RESULTS
-	{
-		bool passed = false;
-		clock_t start_time=0;
-		clock_t end_time=0;
-		float seconds = 0.0f;
-	};
 
-	class UnitTests
-	{
+
+	class XMLparserTestEnvironment {
 	public:
-		TEST_RESULTS RunAllTests();
+		struct TEST_RESULTS{
+			bool passed = false;
+			clock_t start_time = 0;
+			clock_t end_time = 0;
+			float seconds = 0.0f;
+		};
 
 	private:
+		class UnitTests {
+		public:
+			UnitTests(XMLparserTestEnvironment& _env) :env(_env) {}
+			TEST_RESULTS RunAllTests();
 
-		TEST_RESULTS NodeConstructorTest();
-		TEST_RESULTS ToLowerTest();
-		TEST_RESULTS TrimWhitespaceTest();
-	};
+		private:
 
-	class XMLparser_TESTS {
+			TEST_RESULTS NodeConstructorTest();
+			TEST_RESULTS ToLowerTest();
+			TEST_RESULTS TrimWhitespaceTest();
+
+			XMLparserTestEnvironment& env;
+		};
+
 	public:
-		XMLparser_TESTS() {}
+		bool print_output = true;
+		std::shared_ptr<UnitTests> unitTests=nullptr;
+
+		XMLparserTestEnvironment(bool _print):print_output(_print){unitTests=std::make_shared<UnitTests>(*this);}
 
 		// Main entry point for all tests for XMLparser.hpp.
 		void Run() { RunAllTests(); }
-
-		UnitTests unitTests;
 
 	private:
 
