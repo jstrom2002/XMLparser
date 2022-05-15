@@ -17,8 +17,10 @@ XMLparser xml;
 if(xml.isParseable("local_file.xml"){
   xml.load("local_file.xml");
   int idx = xml.getIndexByTagFirstOrDefault("data");
-  xml.nodes.insert(xml.nodes.begin() + idx, XMLnode(L"<test_val id="2">"));
-  xml.nodes.insert(xml.nodes.begin() + idx + 1, XMLnode(L"</test_val>"));
+  XMLnode open_node(L"<test_val id="2">");
+  XMLnode close_node(L"</test_val>"));
+  xml.nodes.insert(xml.nodes.begin() + idx, open_node);
+  xml.nodes.insert(xml.nodes.begin() + idx + 1, close_node);
   xml.save("local_file.xml");
 }
 else{
