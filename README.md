@@ -10,5 +10,19 @@
   
 <br>
 
+### Examples
+````
+XMLparser xml;
+xml.load("local_file.xml");
+int idx = xml.getIndexByTagFirstOrDefault("data");
+xml.nodes.insert(xml.nodes.begin() + idx, XMLnode(L"<test_val id="2">"));
+xml.nodes.insert(xml.nodes.begin() + idx + 1, XMLnode(L"</test_val>"));
+xml.save("local_file.xml");
+````
+
+### Notes on Usage  
+Currently this library will parse nearly any valid XML formatted file, include .dae files, etc. which use XML formatting. 
+  
+  
 ### About  
-Tested with MSVC and GCC C++11, C++14, C++17, and C++20 compilers with all Wall/pedantic options (thanks to cpp.sh). Some testing performed using data from [Wikipedia's backups](http://dumps.wikimedia.your.org/backup-index.html). For questions about formatting, see the [W3 XML standard doc](https://www.w3.org/TR/xml/)
+This code has been tested with MSVC and GCC C++11, C++14, C++17, and C++20 compilers with all Wall/pedantic options (thanks to cpp.sh). Some testing performed using data from [Wikipedia's backups](http://dumps.wikimedia.your.org/backup-index.html). For questions about formatting, see the [W3 XML standard doc](https://www.w3.org/TR/xml/).  If you are having trouble parsing a particular XML file, please create an issue on this repo.
