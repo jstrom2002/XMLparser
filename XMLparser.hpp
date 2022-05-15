@@ -222,9 +222,9 @@ namespace XMLparser{
             for (i = 0; i < 3; i++) { ss << dis(gen); }
             ss << "-";
             for (i = 0; i < 12; i++) { ss << dis(gen); }
-            XMLstring ret_str = ss.str();
+            XMLstring ret_str = s2ws(ss.str());
             if (!validateGuid(ret_str))
-                XML_EXCEPTION("ERROR! Invalid guid generated.");
+                XML_EXCEPTION(L"ERROR! Invalid guid generated.");
             return ret_str;
         }
     };
