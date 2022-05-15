@@ -47,12 +47,13 @@ namespace XMLparser{
     typedef std::wofstream XMLofstream;
     typedef wchar_t XMLchar;
     typedef std::wstring XMLstring;
-#define IS_LITTLEENDIAN (*((char*)&((int){0x00ff}))!=(0x00))//should be true for most Windows/Linux machines
     XMLuint MAX_FILESIZE = 9999999999999u;
     enum class XML_TAG_TYPE{UNKNOWN,COMMENT,CLOSE,OPEN,SELF_CLOSING,UNIQUE,XML_DEFINITION,COUNT};// replacement for enum which is not available in c++98, open=='<...>', close=='</...>', self-closing=='<.../>',comment=='<!-- ... -->',xml=='<?...?>' 0          
     enum class XML_ENCODING{UNKNOWN,UTF_8,UTF_16,UTF_32,ISO_8859_1,ISO_10646_UCS_2,SHIFT_JIS,ASCII,COUNT};    
     XMLstring toLower(XMLstring str){for(size_t i=0;i<str.length();++i){str[i]=std::tolower(str[i]);}return str;}
     void trimWhitespace(XMLstring& str){while(str.length()>0&&str[0]==L' '){str=str.substr(1);}while(str.length()>0&&str[str.length()-1]==L' '){str=str.substr(0,str.length()-1);}}
+    void removeFormattingChars(XMLstring& str){for(int i=0;i<str.length();++i)if(str[i]<L' '){str.erase(str.begin()+i);i--;}}
+    void removeFormattingChars(std::string& str){for(int i=0;i<str.length();++i)if(str[i]<' '){str.erase(str.begin()+i);i--;}}
     std::wstring s2ws(const std::string& str){return std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t>().from_bytes(str);}
     std::string ws2s(const std::wstring& wstr){return std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t>().to_bytes(wstr);}
     //std::u16string ws2u16s(const std::wstring& wstr){
@@ -157,14 +158,14 @@ namespace XMLparser{
                 start_pos = end_pos = pos;
                 next_char = str[pos];
                 pos++;
-                while ((next_char != ' '||in_string==true) && pos < str.length()) {
+                while ((next_char != L' '||in_string==true)&&pos<str.length()){
                     next_char = str[pos];
                     end_pos = pos;
-                    if (next_char == '\''){
+                    if (next_char == L'\''){
                         in_string = !in_string;
                         curr_string_char=in_string?next_char:0;
                     }
-                    else if(curr_string_char!='\''&&next_char=='\"'){
+                    else if(curr_string_char!=L'\''&&next_char==L'\"'){
                         in_string = !in_string;
                         curr_string_char=in_string?next_char:0;
                     }
@@ -212,59 +213,65 @@ namespace XMLparser{
             std::stringstream ss;
             int i;
             ss << std::hex;
-            for (i = 0; i < 8; i++) { ss << dis(gen); }
+            for (i=0;i<8;i++){ss<<dis(gen);}
             ss << "-";
-            for (i = 0; i < 4; i++) { ss << dis(gen); }
+            for (i=0;i<4;i++){ss<<dis(gen);}
             ss << "-4";
-            for (i = 0; i < 3; i++) { ss << dis(gen); }
+            for (i=0;i<3;i++){ss<<dis(gen);}
             ss << "-";
             ss << dis2(gen);
-            for (i = 0; i < 3; i++) { ss << dis(gen); }
+            for (i=0;i<3;i++){ss<< dis(gen);}
             ss << "-";
-            for (i = 0; i < 12; i++) { ss << dis(gen); }
+            for (i=0;i<12;i++){ss<<dis(gen);}
             XMLstring ret_str = s2ws(ss.str());
+            ss.clear();
             if (!validateGuid(ret_str))
                 XML_EXCEPTION(L"ERROR! Invalid guid generated.");
             return ret_str;
         }
     };
-	class XMLparser{
-	public:
-        XMLuint BOMskipBytes=0;
-        XML_ENCODING encoding=XML_ENCODING::UNKNOWN;
-        bool littleEndian=true;//endian-ness of the data present in the XML to load/save
+    class XMLparser {
+    public:
+        XMLuint BOMskipBytes = 0;
+        XML_ENCODING encoding = XML_ENCODING::UNKNOWN;
+        bool littleEndian = true;//endian-ness of the data present in the XML to load/save
+        int saveFlags=XMLifstream::out|XMLifstream::binary;
         std::vector<std::shared_ptr<XMLnode>> nodes;
 
-        int count(const XMLstring& _tag){int inc=0;for(XMLuint i=0;i<nodes.size();++i){if(nodes[i]->tagsEqual(_tag))inc++;}return inc;}
-        int count(const XML_TAG_TYPE& tp){int inc=0;for(XMLuint i=0;i<nodes.size();++i){if(nodes[i]->type==tp)inc++;}return inc;}
-        bool exists(const XMLstring& _tag){for(XMLuint i=0;i<nodes.size();++i){if(nodes[i]->tagsEqual(_tag))return true;}return false;}
-        bool exists(const XML_TAG_TYPE& tp){for(XMLuint i=0;i<nodes.size();++i){if(nodes[i]->type==tp)return true;}return false;}
-        std::vector<std::shared_ptr<XMLnode>> getByTag(const XMLstring& _tag){std::vector<std::shared_ptr<XMLnode>> fnd;
-            for(XMLuint i=0;i<nodes.size();++i){if(nodes[i]->tagsEqual(_tag))fnd.push_back(nodes[i]); }return fnd; }
-        std::vector<std::shared_ptr<XMLnode>> getByType(const XML_TAG_TYPE& tp){std::vector<std::shared_ptr<XMLnode>> fnd;
-            for(XMLuint i=0;i<nodes.size();++i){if(nodes[i]->type==tp)fnd.push_back(nodes[i]);}return fnd;}
-        std::shared_ptr<XMLnode> getByTagFirstOrDefault(const XMLstring& _tag){for(XMLuint i=0;i<nodes.size();++i){if(nodes[i]->tagsEqual(_tag))return nodes[i];}return nullptr; }
-        std::shared_ptr<XMLnode> getByTypeFirstOrDefault(const XML_TAG_TYPE& tp){for(XMLuint i=0;i<nodes.size();++i){if(nodes[i]->type==tp)return nodes[i];}return nullptr; }
+        int count(const XMLstring& _tag) { int inc = 0; for (XMLuint i = 0; i < nodes.size(); ++i) { if (nodes[i]->tagsEqual(_tag))inc++; }return inc; }
+        int count(const XML_TAG_TYPE& tp) { int inc = 0; for (XMLuint i = 0; i < nodes.size(); ++i) { if (nodes[i]->type == tp)inc++; }return inc; }
+        bool exists(const XMLstring& _tag) { for (XMLuint i = 0; i < nodes.size(); ++i) { if (nodes[i]->tagsEqual(_tag))return true; }return false; }
+        bool exists(const XML_TAG_TYPE& tp) { for (XMLuint i = 0; i < nodes.size(); ++i) { if (nodes[i]->type == tp)return true; }return false; }
+        std::vector<std::shared_ptr<XMLnode>> getByTag(const XMLstring& _tag) {
+            std::vector<std::shared_ptr<XMLnode>> fnd;
+            for (XMLuint i = 0; i < nodes.size(); ++i) { if (nodes[i]->tagsEqual(_tag))fnd.push_back(nodes[i]); }return fnd;
+        }
+        std::vector<std::shared_ptr<XMLnode>> getByType(const XML_TAG_TYPE& tp) {
+            std::vector<std::shared_ptr<XMLnode>> fnd;
+            for (XMLuint i = 0; i < nodes.size(); ++i) { if (nodes[i]->type == tp)fnd.push_back(nodes[i]); }return fnd;
+        }
+        std::shared_ptr<XMLnode> getByTagFirstOrDefault(const XMLstring& _tag) { for (XMLuint i = 0; i < nodes.size(); ++i) { if (nodes[i]->tagsEqual(_tag))return nodes[i]; }return nullptr; }
+        std::shared_ptr<XMLnode> getByTypeFirstOrDefault(const XML_TAG_TYPE& tp) { for (XMLuint i = 0; i < nodes.size(); ++i) { if (nodes[i]->type == tp)return nodes[i]; }return nullptr; }
         bool isParseable(const char* xml_filename) {
-            bool ret_val=true;
-            XML_ENCODING enc=findEncoding(xml_filename);
-            XML_ENCODING bom_enc=checkBOM(xml_filename);
-            if(
-                (enc==XML_ENCODING::UNKNOWN&&bom_enc==XML_ENCODING::UNKNOWN) ||
-                (enc!=bom_enc&&enc!=XML_ENCODING::UNKNOWN&&bom_enc!=XML_ENCODING::UNKNOWN)
-            )
-                ret_val=false;
+            bool ret_val = true;
+            XML_ENCODING enc = findEncoding(xml_filename);
+            XML_ENCODING bom_enc = checkBOM(xml_filename);
+            if (
+                (enc == XML_ENCODING::UNKNOWN && bom_enc == XML_ENCODING::UNKNOWN) ||
+                (enc != bom_enc && enc != XML_ENCODING::UNKNOWN && bom_enc != XML_ENCODING::UNKNOWN)
+                )
+                ret_val = false;
 
             reset();
             return ret_val;
         }
-        void load(const char* xml_filename){parse(xml_filename);}
+        void load(const char* xml_filename) { parse(xml_filename); }
         //void prettify() { do_prettification(); }
-        void printToConsole(){
+        void printToConsole() {
             for (std::shared_ptr<XMLnode> nd : nodes) {
-                if (encoding==XML_ENCODING::UTF_16){
-#ifdef _WIN32
-                    _cwprintf(TEXT((nd->ToString() + L"\r\n").c_str()));
+                if (encoding == XML_ENCODING::UTF_16) {
+#ifdef _WIN32 
+                    //_cwprintf(TEXT((nd->ToString() + L"\r\n").c_str()));
 #endif
                 }
                 else {
@@ -274,13 +281,13 @@ namespace XMLparser{
                 }
             }
         }
-        void save(const char* xml_filename){write_to_disk(xml_filename);}
+        void save(const char* xml_filename) { write_to_disk(xml_filename); }
         bool validate() { return do_validation(); }
         std::vector<std::shared_ptr<XMLnode>> find(XMLstring tag) {
             std::vector<std::shared_ptr<XMLnode>> nds;
             if (tag.length() == 0)
                 return nds;
-            for (XMLuint i=0;i<nodes.size();++i) {
+            for (XMLuint i = 0; i < nodes.size(); ++i) {
                 if (nodes[i]->tagsEqual(tag))
                     nds.push_back(nodes[i]);
             }
@@ -289,16 +296,16 @@ namespace XMLparser{
         std::shared_ptr<XMLnode> findTagPair(std::shared_ptr<XMLnode> nd) {
             if (!nd->isOpenOrClose())
                 return nullptr;
-            int inc=(nd->type==XML_TAG_TYPE::CLOSE)?-1:1;
-            for (XMLuint i=0u;i<nodes.size();++i){
-                if (nd==nodes[i]){
-                    int level=(nd->type==XML_TAG_TYPE::CLOSE)?-1:1;
-                    for (int j=(int)i+inc;j<(int)nodes.size()&&j>=0;j+=inc){
-                        if(nodes[j]->isOpenOrClose()){level+=(nodes[j]->type==XML_TAG_TYPE::CLOSE)?-1:1;}
-                        if (level==0&&nd->tagsEqual(nodes[j]->tag)&&nd!=nodes[j]&&
-                            ((nd->type==XML_TAG_TYPE::OPEN&&nodes[j]->type==XML_TAG_TYPE::CLOSE)||(nd->type==XML_TAG_TYPE::CLOSE&&nodes[j]->type==XML_TAG_TYPE::OPEN))
-                        )
-                            return nodes[j];                        
+            int inc = (nd->type == XML_TAG_TYPE::CLOSE) ? -1 : 1;
+            for (XMLuint i = 0u; i < nodes.size(); ++i) {
+                if (nd == nodes[i]) {
+                    int level = (nd->type == XML_TAG_TYPE::CLOSE) ? -1 : 1;
+                    for (int j = (int)i + inc; j < (int)nodes.size() && j >= 0; j += inc) {
+                        if (nodes[j]->isOpenOrClose()) { level += (nodes[j]->type == XML_TAG_TYPE::CLOSE) ? -1 : 1; }
+                        if (level == 0 && nd->tagsEqual(nodes[j]->tag) && nd != nodes[j] &&
+                            ((nd->type == XML_TAG_TYPE::OPEN && nodes[j]->type == XML_TAG_TYPE::CLOSE) || (nd->type == XML_TAG_TYPE::CLOSE && nodes[j]->type == XML_TAG_TYPE::OPEN))
+                            )
+                            return nodes[j];
                     }
                     break;
                 }
@@ -306,58 +313,71 @@ namespace XMLparser{
             return nullptr;
         }
     private:
+        XMLuint loadFileSize=0u;
         void reset() {
-            BOMskipBytes=0;
-            encoding=XML_ENCODING::UNKNOWN;
-            littleEndian=true;
+            BOMskipBytes = 0;
+            encoding = XML_ENCODING::UNKNOWN;
+            littleEndian = true;
+            loadFileSize = 0u;
+            saveFlags = XMLifstream::out | XMLifstream::binary;
             nodes.clear();
         }
         XML_ENCODING parseEncoding(std::shared_ptr<XMLnode> nd) {
-            if(encoding!=XML_ENCODING::UNKNOWN){return XML_ENCODING::UNKNOWN;}
-            if (nd->type==XML_TAG_TYPE::XML_DEFINITION){
+            if (encoding != XML_ENCODING::UNKNOWN) { return XML_ENCODING::UNKNOWN; }
+            if (nd->type == XML_TAG_TYPE::XML_DEFINITION) {
                 std::shared_ptr<XMLattribute> xml_encoding_attr = nd->getAttribute(L"encoding");
-                if (xml_encoding_attr!=nullptr){
-                    XMLstring attr=xml_encoding_attr->value;
+                if (xml_encoding_attr != nullptr) {
+                    XMLstring attr = xml_encoding_attr->value;
                     trimWhitespace(attr);
-                    attr=toLower(attr);
-                    if(attr.find(L"ico-10646-ucs-2")!=XMLstring::npos){return XML_ENCODING::ISO_10646_UCS_2;}
-                    else if(attr.find(L"iso-8859-1")!=XMLstring::npos){return XML_ENCODING::ISO_8859_1;}
-                    else if(attr.find(L"shift-js")!=XMLstring::npos){return XML_ENCODING::SHIFT_JIS;}
-                    else if(attr.find(L"ascii")!=XMLstring::npos){return XML_ENCODING::ASCII;}
-                    else if(attr.find(L"utf-32")!=XMLstring::npos){return XML_ENCODING::UTF_32;}
-                    else if(attr.find(L"utf-16")!=XMLstring::npos){return XML_ENCODING::UTF_16;}
-                    else{return XML_ENCODING::UTF_8;}//UTF-8 is the default encoding for XML.
+                    attr = toLower(attr);
+                    if (attr.find(L"ico-10646-ucs-2") != XMLstring::npos) { return XML_ENCODING::ISO_10646_UCS_2; }
+                    else if (attr.find(L"iso-8859-1") != XMLstring::npos) { return XML_ENCODING::ISO_8859_1; }
+                    else if (attr.find(L"shift-js") != XMLstring::npos) { return XML_ENCODING::SHIFT_JIS; }
+                    else if (attr.find(L"ascii") != XMLstring::npos) { return XML_ENCODING::ASCII; }
+                    else if (attr.find(L"utf-32") != XMLstring::npos) { return XML_ENCODING::UTF_32; }
+                    else if (attr.find(L"utf-16") != XMLstring::npos) { return XML_ENCODING::UTF_16; }
+                    else if (attr.find(L"utf-8") != XMLstring::npos) { return XML_ENCODING::UTF_8; }
+                    else { return XML_ENCODING::UTF_8; }//fallback to ASCII parsing.
                 }
-                else{return XML_ENCODING::UTF_8;}//if no explicit attribute for encoding is set, assume default encoding (UTF-8).
+                else { return XML_ENCODING::UTF_8; }//if no explicit attribute for encoding is set, try simple ASCII
             }
             return XML_ENCODING::UNKNOWN;
         }
-        bool do_validation() { // TO DO: add more complex validation than simple tag matching.   
-            if (nodes.size() <= 1)
+        bool do_validation(){ // TO DO: add more complex validation than simple tag matching.   
+            if (nodes.size()<=1)
                 XML_EXCEPTION(L"ERROR! Validation failed. No nodes were parsed from file.");
-            if (encoding==XML_ENCODING::UNKNOWN)
+            if (encoding == XML_ENCODING::UNKNOWN)
                 XML_EXCEPTION(L"ERROR! Validation failed. No encoding for this XML object is set.");
-            for (XMLuint i = 0; i < nodes.size(); ++i){
-                if (nodes[i]->isOpenOrClose()){ // validation for open/close tag pairs
-                    std::shared_ptr<XMLnode> pair=findTagPair(nodes[i]);
-                    if (pair==nullptr) { // Make sure there are matching open/close tag pairs.
+            for (XMLuint i = 0; i < nodes.size(); ++i) {
+                if (nodes[i]->isOpenOrClose()) { // validation for open/close tag pairs
+                    std::shared_ptr<XMLnode> pair = findTagPair(nodes[i]);
+                    if (pair == nullptr) { // Make sure there are matching open/close tag pairs.
                         XML_EXCEPTION((L"ERROR! Validation failed. Could not find matching tag pair for open/close tags: " + nodes[i]->tag).c_str());
                     }
                     if (pair->parent != nodes[i]->parent) { // make sure node tree relationship is preserved from file.
                         XML_EXCEPTION((L"ERROR! Validation failed. Node tree relationship mismatching for open/close tags: " + nodes[i]->tag).c_str());
                     }
                 }
-            }           
+            }
             return true;
         }
         void do_prettification() {// destructive op to remove whitespace and other unnecessary values from XML
             //if (& str.find("\r\n") == XMLstring::npos) { str.append("\r\n"); }
-        }        
+        }
+        XMLuint getFileSize(XMLifstream& fin) {
+            XMLuint sz=0;
+            XMLuint curr_pos=(XMLuint)fin.tellg();
+            fin.seekg(0, XMLifstream::end);
+            sz=(XMLuint)fin.tellg();
+            fin.seekg(curr_pos, XMLifstream::beg);
+            return sz;
+        }
         void encodeIfstream(XMLifstream& fin, XML_ENCODING encoding) {
             if (encoding == XML_ENCODING::UNKNOWN) { return; }
             switch (encoding) {
             case XML_ENCODING::ASCII:
                 //fin.imbue(std::locale(fin.getloc(), new std::codecvt<XMLchar, char, mbstate_t>));
+                fin.imbue(std::locale(fin.getloc(), new std::codecvt_utf8_utf16<XMLchar, 0x10FFFF>));
                 break;
             case XML_ENCODING::ISO_10646_UCS_2:
                 break;
@@ -383,8 +403,8 @@ namespace XMLparser{
             }
         }
         void encodeOfstream(XMLofstream& fout, XML_ENCODING encoding) {
-            if(encoding==XML_ENCODING::UNKNOWN){return;}
-            switch (encoding) {
+            if (encoding==XML_ENCODING::UNKNOWN) { return; }
+            switch(encoding){
             case XML_ENCODING::ASCII:
                 break;
             case XML_ENCODING::ISO_10646_UCS_2:
@@ -394,7 +414,7 @@ namespace XMLparser{
             case XML_ENCODING::UTF_32:
                 break;
             case XML_ENCODING::UTF_16:
-                if(littleEndian)
+                if (littleEndian)
                     fout.imbue(std::locale(fout.getloc(), new std::codecvt_utf16<XMLchar, 0x10ffff, std::little_endian>));
                 else {
                     fout.imbue(std::locale(fout.getloc(), new std::codecvt_utf16<XMLchar, 0x10ffff>));
@@ -417,47 +437,32 @@ namespace XMLparser{
             //    return true;//XML_EXCEPTION(L"ERROR! Fail bit set while reading file.");            
             if (fin.bad())
                 return true;// XML_EXCEPTION(L"ERROR! Bad bit set while reading file.");
+            //if((XMLuint)fin.tellg()>=loadFileSize)//redundant EOF check
+            //    return true;
             return false;
         }
-        bool doSingleParsePass(XMLifstream& fin, std::shared_ptr<XMLnode>& curr_parent, XMLstring& str, XMLstring& innerText, XMLchar& curr_char, bool& in_comment) {
-            if (nodes.size() == 11) {//73)//4)//121)
-                int BREAK_HERE = 0;//delete me      
+        bool parseInnerText(XMLifstream& fin,XMLstring& innerText,XMLstring& tag_str,XMLchar& c){
+            while (c!=L'<'){
+                if (checkFailBits(fin)){return false;}
+                if (c>31)
+                    innerText+=c;
+                c=fin.get();
             }
-            while (curr_char != L'<') {
-                if (checkFailBits(fin)){return false;}            
-                if (curr_char > 31)
-                    innerText += curr_char;
-                curr_char=fin.get();
-            }
-            str += curr_char;
-            while (curr_char != L'>' || in_comment) {
-                if (checkFailBits(fin)){return false;}            
-                curr_char = fin.get();
-                if (curr_char > 31)
-                    str += curr_char;
+            tag_str+=c;
+            return true;
+        }
+        bool parseTag(XMLifstream& fin, XMLstring& str, XMLchar& c, bool& in_comment){
+            while (c!=L'>'||in_comment) {
+                if(checkFailBits(fin)){return false;}
+                c=fin.get();
+                if (c>31)
+                    str+=c;
                 in_comment = hasUnclosedComment(str) ? true : false;
             }
-            if (nodes.size() > 0) {
-                nodes.back()->innerText = innerText;
-            }
-            std::shared_ptr<XMLnode> nd = std::make_shared<XMLnode>(str, curr_parent);
-            if(nd->type!=XML_TAG_TYPE::COMMENT){nodes.push_back(nd);}
-            else{nd->tag=nd->innerText=L"";}
-            if (curr_parent==nullptr&&nd->type==XML_TAG_TYPE::OPEN){curr_parent=nodes.back();}//initialization
-            if (curr_parent!=nullptr&&nodes.back()!=curr_parent&&nd->type!=XML_TAG_TYPE::CLOSE){//assign children
-                curr_parent->children.push_back(nodes.back());
-            }
-            if (nodes.back()->type == XML_TAG_TYPE::OPEN) { curr_parent = nodes.back(); }//make current node the parent
-            else if (nodes.back()->type == XML_TAG_TYPE::CLOSE) {//backtrack
-                std::shared_ptr<XMLnode> match_nd = findTagPair(nodes.back());
-                if (match_nd) { curr_parent = match_nd->parent; nodes.back()->parent = curr_parent; }
-            }
-            str = innerText = L"";
-            in_comment = false;
             return true;
         }
         XML_ENCODING checkBOM(const char* xml_filename) {
-            std::ifstream fin(xml_filename, std::ifstream::in | std::ifstream::binary);
+            std::ifstream fin(xml_filename,std::ifstream::in|std::ifstream::binary);
             if (!fin.is_open()) {
                 XML_EXCEPTION(L"ERROR! File " + s2ws(xml_filename) + L" could not be opened.");
             }
@@ -477,35 +482,53 @@ namespace XMLparser{
         }
         XML_ENCODING findEncoding(const char* xml_filename) {
             XML_ENCODING enc=XML_ENCODING::UNKNOWN;
-            XMLifstream fin(xml_filename, XMLifstream::in | XMLifstream::binary);
+            std::string tag_str,innerText;
+            char* inner_text;
+            std::ifstream fin(xml_filename,std::ifstream::in|std::ifstream::binary);
             if (!fin.is_open()) {
                 XML_EXCEPTION(L"ERROR! File " + s2ws(xml_filename) + L" could not be opened.");
             }
-            XMLchar curr_char = 0;
-            bool in_comment = false;
-            XMLstring str;
-            std::shared_ptr<XMLnode> curr_parent = nullptr;
-            while (enc==XML_ENCODING::UNKNOWN){
-                while (curr_char!=L'<'){
-                    if (checkFailBits(fin)){break;}
-                    curr_char=fin.get();
-                }
-                str+=curr_char;
-                while (curr_char!= L'>'||in_comment){
-                    if (checkFailBits(fin)){break;}
-                    curr_char = fin.get();
-                    if (curr_char > 31)
-                        str += curr_char;
-                    in_comment=hasUnclosedComment(str)?true:false;
-                }
-                if (checkFailBits(fin)){break;}
-                std::shared_ptr<XMLnode> nd = std::make_shared<XMLnode>(str, curr_parent);
-                if (nd->type == XML_TAG_TYPE::XML_DEFINITION){enc=parseEncoding(nd);}
-                str=L"";
+            getline(fin, tag_str,'>');
+            tag_str+='>';
+            removeFormattingChars(tag_str);
+            std::shared_ptr<XMLnode> nd = std::make_shared<XMLnode>(s2ws(tag_str), nullptr);
+            if (nd->type == XML_TAG_TYPE::XML_DEFINITION){enc=parseEncoding(nd);}
+            while(nd->type!=XML_TAG_TYPE::XML_DEFINITION){
+                getline(fin,innerText,'<');
+                nd = std::make_shared<XMLnode>(s2ws(tag_str),nullptr);
+                if (nd->type == XML_TAG_TYPE::XML_DEFINITION){enc=parseEncoding(nd);break;}
+                getline(fin, tag_str, '>');
+                tag_str.insert(tag_str.begin(),'<');
+                tag_str+='>';
+                removeFormattingChars(tag_str);
             }
             fin.close();
             reset();
             return enc;
+        }
+        bool doSingleParsePass(XMLifstream& fin, std::shared_ptr<XMLnode>& curr_parent, XMLstring& str, XMLstring& innerText, XMLchar& curr_char, bool& in_comment) {
+            if(!parseInnerText(fin, innerText, str, curr_char)) {return false;}
+            if(!parseTag(fin, str, curr_char, in_comment)){return false;}
+            if (nodes.size() > 0) { nodes.back()->innerText = innerText; }//save inner text to current node
+            std::shared_ptr<XMLnode> nd = std::make_shared<XMLnode>(str, curr_parent);
+
+            if(nd->tag.find(L"COLLADA")!=XMLstring::npos&&nd->type==XML_TAG_TYPE::CLOSE)
+                int BREAK_HERE=0;//DELETE ME
+
+            if (nd->type != XML_TAG_TYPE::COMMENT) { nodes.push_back(nd); }
+            else { nd->tag = nd->innerText = L""; }
+            if (curr_parent == nullptr && nd->type == XML_TAG_TYPE::OPEN) { curr_parent = nodes.back(); }//initialization
+            if (curr_parent != nullptr && nodes.back() != curr_parent && nd->type != XML_TAG_TYPE::CLOSE) {//assign children
+                curr_parent->children.push_back(nodes.back());
+            }
+            if (nodes.back()->type == XML_TAG_TYPE::OPEN) { curr_parent = nodes.back(); }//make current node the parent
+            else if (nodes.back()->type == XML_TAG_TYPE::CLOSE) {//backtrack
+                std::shared_ptr<XMLnode> match_nd = findTagPair(nodes.back());
+                if (match_nd) { curr_parent = match_nd->parent; nodes.back()->parent = curr_parent; }
+            }
+            str = innerText = L"";
+            in_comment = false;
+            return true;
         }
         void parse(const char* xml_filename){//iterate over all tags in file saving position of < and > as ints
             reset();
@@ -516,13 +539,12 @@ namespace XMLparser{
                 XML_EXCEPTION(L"ERROR! BOM and XML definition tag have mismatching encodings. This file cannot be parsed properly, please reformat it.");
             if (encoding==XML_ENCODING::UNKNOWN)
                 XML_EXCEPTION(L"ERROR! File " + s2ws(xml_filename) + L" could not be parsed as XML.");
-            XMLifstream fin(xml_filename, XMLifstream::in|XMLifstream::binary);
-            encodeIfstream(fin,encoding);
+            XMLifstream fin(xml_filename,XMLifstream::in|XMLifstream::binary);
             if (!fin.is_open()) 
                 XML_EXCEPTION(L"ERROR! File "+s2ws(xml_filename)+L" could not be opened.");            
-            fin.seekg(0, XMLifstream::end);
-            XMLuint fsize = fin.tellg();
-            if (fsize > MAX_FILESIZE){
+            encodeIfstream(fin, encoding);
+            loadFileSize=getFileSize(fin);
+            if (loadFileSize > MAX_FILESIZE){
                 XML_EXCEPTION(L"ERROR! File " + s2ws(xml_filename) + L" is too large for available memory.");
             }
             fin.seekg(BOMskipBytes, XMLifstream::beg);//move back to beginning, then over past the BOM (if present)
@@ -539,7 +561,7 @@ namespace XMLparser{
                     fin.close();
                     nodes.clear();
                     littleEndian=!littleEndian;//try other endianness.
-                    XMLifstream fin(xml_filename, XMLifstream::in | XMLifstream::binary);
+                    XMLifstream fin(xml_filename,XMLifstream::in|XMLifstream::binary);
                     encodeIfstream(fin, encoding);
                     curr_char = 0;
                     in_comment = false;
@@ -555,7 +577,7 @@ namespace XMLparser{
             fin.close();
         }
         void write_to_disk(const char* xml_filename) {
-            XMLofstream fout(xml_filename, XMLofstream::out| XMLofstream::binary| XMLofstream::app);
+            XMLofstream fout(xml_filename,saveFlags);
             if (!fout.is_open()){
                 XML_EXCEPTION(L"ERROR! File " + s2ws(xml_filename) + L" could not be opened.");
             }
