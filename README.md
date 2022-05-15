@@ -10,18 +10,24 @@
   
 <br>
 
-### Examples
+### Usage Examples  
+load/save a file:
 ````
 XMLparser xml;
-xml.load("local_file.xml");
-int idx = xml.getIndexByTagFirstOrDefault("data");
-xml.nodes.insert(xml.nodes.begin() + idx, XMLnode(L"<test_val id="2">"));
-xml.nodes.insert(xml.nodes.begin() + idx + 1, XMLnode(L"</test_val>"));
-xml.save("local_file.xml");
+if(xml.isParseable("local_file.xml"){
+  xml.load("local_file.xml");
+  int idx = xml.getIndexByTagFirstOrDefault("data");
+  xml.nodes.insert(xml.nodes.begin() + idx, XMLnode(L"<test_val id="2">"));
+  xml.nodes.insert(xml.nodes.begin() + idx + 1, XMLnode(L"</test_val>"));
+  xml.save("local_file.xml");
+}
+else{
+  std::cout << "Cannot parse file.";
+}
 ````
 
-### Notes on Usage  
-Currently this library will parse nearly any valid XML formatted file, include .dae files, etc. which use XML formatting. 
+### Notes  
+Currently this library will parse nearly any valid XML formatted file (including file types like .dae which use XML formatting. All you need is either an xml definintion tag). Development is ongoing to accurately parse all encodings for .xml files, but generally all UTF-8 or UTF-16 files should be parseable.  
   
   
 ### About  
