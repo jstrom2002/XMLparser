@@ -29,7 +29,7 @@ else{
 ````
 
 ### Notes  
-Currently this library will parse nearly any valid XML formatted file (including file types like .dae which use XML formatting. All you need is either an xml definintion tag). Development is ongoing to accurately parse all encodings for .xml files, but generally all UTF-8 or UTF-16 files should be parseable. There are no external dependencies other than C/C++ headers.  
+Currently this library will parse nearly any valid XML formatted file (including file types like .dae which use XML formatting. All you need is either an xml definintion tag). Development is ongoing to accurately parse all encodings for .xml files, but generally all UTF-8 or UTF-16 files should be parseable. There are no external dependencies other than C/C++ STL or standard library headers.  
   
   
 ### About  
