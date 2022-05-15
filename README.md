@@ -13,15 +13,15 @@
 ### Usage Examples  
 load/save a file:
 ````
-XMLparser xml;
-if(xml.isParseable("local_file.xml"){
-  xml.load("local_file.xml");
-  int idx = xml.getIndexByTagFirstOrDefault("data");
-  XMLnode open_node(L"<test_val id="2">");
-  XMLnode close_node(L"</test_val>"));
-  xml.nodes.insert(xml.nodes.begin() + idx, open_node);
+XMLparser xml; // Create instance of the parser object to hold nodes, etc.
+if(xml.isParseable("local_file.xml") { // Check the formatting of the file to see if it has 
+  xml.load("local_file.xml"); // Load and parse a file into a ilnear list of nodes with related child/parent pointers to preserve XML tree structure.
+  int idx = xml.getIndexByTagFirstOrDefault("data"); // Get the index of a particular node by type.
+  XMLnode open_node(L"<test_val id="2">"); // Create an scoped 'open' node with tag 'test_val'.
+  XMLnode close_node(L"</test_val>")); // Create a closing node to match the open 'test_val' node to close this scope.
+  xml.nodes.insert(xml.nodes.begin() + idx, open_node); // Insert both nodes into the linear node list.
   xml.nodes.insert(xml.nodes.begin() + idx + 1, close_node);
-  xml.save("local_file.xml");
+  xml.save("local_file.xml"); // Write file to disk, overwriting the local_file.xml file's contents by default.
 }
 else{
   std::cout << "Cannot parse file.";
@@ -34,7 +34,7 @@ Encodings: UTF-8, UTF-16
 
 
 ### Notes  
-Currently this library will parse nearly any valid XML formatted file (including file types like .dae which use XML formatting. All you need is either an xml definintion tag). Development is ongoing to accurately parse all encodings for .xml files, but generally all UTF-8 or UTF-16 files should be parseable. There are no external dependencies other than C/C++ STL or standard library headers.  
+Currently this library will parse nearly any valid XML formatted file (including file types like .dae which use XML formatting). This parser requires either a node with an 'xml' tag with the 'encoding' attribute or a BOM with the appropriate encoding bits to parse correctly, else it is assumed all XML files are UTF-8 encoded. Development is ongoing to accurately parse all encodings for .xml files, but generally all UTF-8 or UTF-16 files should be parseable. There are no external dependencies other than C/C++ STL or standard library headers.  
   
   
 ### About  
