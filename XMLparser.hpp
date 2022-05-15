@@ -24,9 +24,7 @@ SOFTWARE.*/
 #include <codecvt>
 #include <cstdlib>
 #include <fstream>
-#include <io.h>
 #include <iostream>
-#include <fcntl.h>
 #include <locale>
 #include <memory>
 #include <random>
@@ -235,7 +233,6 @@ namespace XMLparser{
         XMLuint BOMskipBytes = 0;
         XML_ENCODING encoding = XML_ENCODING::UNKNOWN;
         bool littleEndian = true;//endian-ness of the data present in the XML to load/save
-        int saveFlags=XMLifstream::out|XMLifstream::binary;
         std::vector<std::shared_ptr<XMLnode>> nodes;
 
         int count(const XMLstring& _tag) { int inc = 0; for (XMLuint i = 0; i < nodes.size(); ++i) { if (nodes[i]->tagsEqual(_tag))inc++; }return inc; }
@@ -268,17 +265,12 @@ namespace XMLparser{
         void load(const char* xml_filename) { parse(xml_filename); }
         //void prettify() { do_prettification(); }
         void printToConsole() {
+            if (encoding == XML_ENCODING::UTF_16)
+                std::wcout.imbue(std::locale("en_US.utf16"));
+            else if (encoding == XML_ENCODING::UTF_8)
+                std::wcout.imbue(std::locale("en_US.utf8"));
             for (std::shared_ptr<XMLnode> nd : nodes) {
-                if (encoding == XML_ENCODING::UTF_16) {
-#ifdef _WIN32 
-                    //_cwprintf(TEXT((nd->ToString() + L"\r\n").c_str()));
-#endif
-                }
-                else {
-                    if (encoding == XML_ENCODING::UTF_8)
-                        _setmode(_fileno(stdout), _O_U16TEXT);
-                    std::wcout << nd->ToString() << std::endl;
-                }
+                std::wcout << nd->ToString() << std::endl;                
             }
         }
         void save(const char* xml_filename) { write_to_disk(xml_filename); }
@@ -319,7 +311,6 @@ namespace XMLparser{
             encoding = XML_ENCODING::UNKNOWN;
             littleEndian = true;
             loadFileSize = 0u;
-            saveFlags = XMLifstream::out | XMLifstream::binary;
             nodes.clear();
         }
         XML_ENCODING parseEncoding(std::shared_ptr<XMLnode> nd) {
@@ -554,8 +545,7 @@ namespace XMLparser{
             std::shared_ptr<XMLnode> curr_parent=nullptr;
             int attempts=0;
             bool pass_result=true;
-            while (pass_result&&attempts<2)
-            {
+            while (pass_result&&attempts<2){
                 pass_result=doSingleParsePass(fin,curr_parent,str,innerText,curr_char,in_comment);
                 if (pass_result==false&&encoding==XML_ENCODING::UTF_16&&nodes.size()==0){//if parsing multi-byte data fails, check other endianness
                     fin.close();
@@ -577,7 +567,7 @@ namespace XMLparser{
             fin.close();
         }
         void write_to_disk(const char* xml_filename) {
-            XMLofstream fout(xml_filename,saveFlags);
+            XMLofstream fout(xml_filename,XMLifstream::out|XMLifstream::binary);
             if (!fout.is_open()){
                 XML_EXCEPTION(L"ERROR! File " + s2ws(xml_filename) + L" could not be opened.");
             }
