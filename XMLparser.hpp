@@ -245,6 +245,19 @@ namespace XMLparser{
             for(XMLuint i=0;i<nodes.size();++i){if(nodes[i]->type==tp)fnd.push_back(nodes[i]);}return fnd;}
         std::shared_ptr<XMLnode> getByTagFirstOrDefault(const XMLstring& _tag){for(XMLuint i=0;i<nodes.size();++i){if(nodes[i]->tagsEqual(_tag))return nodes[i];}return nullptr; }
         std::shared_ptr<XMLnode> getByTypeFirstOrDefault(const XML_TAG_TYPE& tp){for(XMLuint i=0;i<nodes.size();++i){if(nodes[i]->type==tp)return nodes[i];}return nullptr; }
+        bool isParseable(const char* xml_filename) {
+            bool ret_val=true;
+            XML_ENCODING enc=findEncoding(xml_filename);
+            XML_ENCODING bom_enc=checkBOM(xml_filename);
+            if(
+                (enc==XML_ENCODING::UNKNOWN&&bom_enc==XML_ENCODING::UNKNOWN) ||
+                (enc!=bom_enc&&enc!=XML_ENCODING::UNKNOWN&&bom_enc!=XML_ENCODING::UNKNOWN)
+            )
+                ret_val=false;
+
+            reset();
+            return ret_val;
+        }
         void load(const char* xml_filename){parse(xml_filename);}
         //void prettify() { do_prettification(); }
         void printToConsole(){
@@ -294,8 +307,10 @@ namespace XMLparser{
         }
     private:
         void reset() {
+            BOMskipBytes=0;
+            encoding=XML_ENCODING::UNKNOWN;
+            littleEndian=true;
             nodes.clear();
-            encoding=XML_ENCODING::UNKNOWN;            
         }
         XML_ENCODING parseEncoding(std::shared_ptr<XMLnode> nd) {
             if(encoding!=XML_ENCODING::UNKNOWN){return XML_ENCODING::UNKNOWN;}
@@ -442,12 +457,12 @@ namespace XMLparser{
             return true;
         }
         XML_ENCODING checkBOM(const char* xml_filename) {
-            std::ifstream fin(xml_filename, XMLifstream::in | XMLifstream::binary);
+            std::ifstream fin(xml_filename, std::ifstream::in | std::ifstream::binary);
             if (!fin.is_open()) {
                 XML_EXCEPTION(L"ERROR! File " + s2ws(xml_filename) + L" could not be opened.");
             }
             XML_ENCODING enc=XML_ENCODING::UNKNOWN;
-            unsigned char bom[4]={0,0,0,0};
+            char bom[4]={0,0,0,0};
             bom[0]=fin.get();
             bom[1]=fin.get();
             bom[2]=fin.get();
@@ -457,12 +472,11 @@ namespace XMLparser{
             else if(bom[0]==0xEF&&bom[1]==0xBB&&bom[2]==0xBF){BOMskipBytes=3;enc=XML_ENCODING::UTF_8;}
             else if(bom[0]==0xFE&&bom[1]==0xFF){BOMskipBytes=2;littleEndian=false;enc=XML_ENCODING::UTF_16;}
             else if(bom[0]==0xFF&&bom[1]==0xFE){BOMskipBytes=2;littleEndian=true;enc=XML_ENCODING::UTF_16;}
-            else if(bom[0]==0xFF&&bom[1]==0xFE){BOMskipBytes=2;littleEndian=true;enc=XML_ENCODING::UTF_16;}
             fin.close();
             return enc;
         }
         XML_ENCODING findEncoding(const char* xml_filename) {
-            XML_ENCODING enc=checkBOM(xml_filename);
+            XML_ENCODING enc=XML_ENCODING::UNKNOWN;
             XMLifstream fin(xml_filename, XMLifstream::in | XMLifstream::binary);
             if (!fin.is_open()) {
                 XML_EXCEPTION(L"ERROR! File " + s2ws(xml_filename) + L" could not be opened.");
@@ -497,6 +511,9 @@ namespace XMLparser{
             reset();
             srand(clock());//fully randomize guids
             encoding=findEncoding(xml_filename);
+            XML_ENCODING bom_encoding = checkBOM(xml_filename);
+            if (bom_encoding!=XML_ENCODING::UNKNOWN&&encoding!=bom_encoding)
+                XML_EXCEPTION(L"ERROR! BOM and XML definition tag have mismatching encodings. This file cannot be parsed properly, please reformat it.");
             if (encoding==XML_ENCODING::UNKNOWN)
                 XML_EXCEPTION(L"ERROR! File " + s2ws(xml_filename) + L" could not be parsed as XML.");
             XMLifstream fin(xml_filename, XMLifstream::in|XMLifstream::binary);
