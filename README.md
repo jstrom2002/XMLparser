@@ -29,8 +29,8 @@ else{
 ````
 
 ### Notes  
-Currently this library will parse nearly any valid XML formatted file (including file types like .dae which use XML formatting. All you need is either an xml definintion tag). Development is ongoing to accurately parse all encodings for .xml files, but generally all UTF-8 or UTF-16 files should be parseable.  
+Currently this library will parse nearly any valid XML formatted file (including file types like .dae which use XML formatting. All you need is either an xml definintion tag). Development is ongoing to accurately parse all encodings for .xml files, but generally all UTF-8 or UTF-16 files should be parseable. There are no external dependencies other than C/C++ headers.  
   
   
 ### About  
-This code has been tested on a Windows machine with MSVC and GCC C++11, C++14, C++17, and C++20 compilers with all Wall/pedantic options (thanks to cpp.sh). Some testing performed using data from [Wikipedia's backups](http://dumps.wikimedia.your.org/backup-index.html). For questions about formatting, see the [W3 XML standard doc](https://www.w3.org/TR/xml/).  If you are having trouble parsing a particular XML file, please create an issue on this repo. Thank you for your patience.  
+This code has been tested on a Windows 10 machine with MSVC and GCC C++11, C++14, C++17, and C++20 compilers with all Wall/pedantic options (thanks to cpp.sh). Some testing performed using data from [Wikipedia's backups](http://dumps.wikimedia.your.org/backup-index.html). For questions about formatting, see the [W3 XML standard doc](https://www.w3.org/TR/xml/).  If you are having trouble parsing a particular XML file, please create an issue on this repo. Thank you for your patience.  
