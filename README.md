@@ -14,7 +14,7 @@
 load/save a file:
 ````
 XMLparser xml; // Create instance of the parser object to hold nodes, etc.
-if(xml.isParseable("local_file.xml") { // Check the formatting of the file to see if it has 
+if(xml.isParseable("local_file.xml") { // Check the formatting of the file to see if it is valid before parsing 
   xml.load("local_file.xml"); // Load and parse a file into a linear list of nodes with related child/parent pointers to preserve XML tree structure.
   int idx = xml.getIndexByTagFirstOrDefault("data"); // Get the index of a particular node by type.
   XMLnode open_node(L"<test_val id="2">"); // Create an scoped 'open' node with tag 'test_val'.
