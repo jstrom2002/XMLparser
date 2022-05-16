@@ -1,7 +1,7 @@
 # XMLparser
-
 ### _C++11 Compliant Single-header C++ XML Parser._  
 
+Copyright &copy; 2022 JH Strom  
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/jstrom2002/XMLparser/main/LICENSE)
 [![GitHub Releases](https://img.shields.io/github/release/jstrom2002/XMLparser.svg)](https://github.com/jstrom2002/json/releases)
 [![GitHub Downloads](https://img.shields.io/github/downloads/jstrom2002/XMLparser/total)](https://github.com/jstrom2002/json/releases)
