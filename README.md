@@ -38,4 +38,6 @@ Currently this library will parse nearly any valid XML formatted file (including
   
   
 ### About  
-This code has been tested on a Windows 10 machine with MSVC and GCC C++11, C++14, C++17, and C++20 compilers with all Wall/pedantic options (thanks to cpp.sh). For questions about formatting, see the [W3 XML standard doc](https://www.w3.org/TR/xml/).  If you are having trouble parsing a particular XML file, please create an issue on this repo. Thank you for your patience.  
+This code has been tested on a Windows 10 machine and compiled with MSVC (and also some rudimentary compilation tests with GCC) C++11, C++14, C++17, and C++20 compilers with all Wall/pedantic options (thanks to cpp.sh). For questions about formatting, see the [W3 XML standard doc](https://www.w3.org/TR/xml/).  If you are having trouble parsing a particular XML file, please create an issue on this repo. Thank you for your patience.  
+
+- Microsoft's list of valid XML encodings:  https://docs.microsoft.com/en-us/previous-versions/troubleshoot/msxml/xml-encoding-dom-interface-methods
