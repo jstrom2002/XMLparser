@@ -1,17 +1,22 @@
 #pragma once
 #include <time.h>
 #include <memory>
+#include <string>
 
 namespace XMLparser_test {
 
 
 	class XMLparserTestEnvironment {
 	public:
-		struct TEST_RESULTS{
+		class TEST_RESULTS{
+		public:
 			bool passed = false;
 			clock_t start_time = 0;
 			clock_t end_time = 0;
 			float seconds = 0.0f;
+			std::string name="";
+
+			TEST_RESULTS(std::string _name):name(_name){}
 		};
 
 	private:
