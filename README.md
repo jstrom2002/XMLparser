@@ -8,6 +8,10 @@ Copyright &copy; 2022 JH Strom
   
 <br>  
 
+```diff
++ This project is free and open source software (FOSS)
+```
+
 ### About  
 This library will parse nearly any valid XML formatted file, including file types like .dae which use XML formatting. This parser requires either a node with an 'xml' tag with the 'encoding' attribute or a BOM with the appropriate encoding bits to parse correctly, else it is assumed all XML files are UTF-8 encoded. Development is ongoing to accurately parse all encodings for .xml files, but generally all UTF-8 or UTF-16 files should be parseable. There are no external dependencies other than C/C++ STL or standard library headers.  
 
