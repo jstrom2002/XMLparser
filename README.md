@@ -13,19 +13,14 @@ Copyright &copy; 2022 JH Strom
 ### Usage Examples  
 load/save a file:
 ````
-XMLparser xml;                                          // Create instance of the parser object to hold nodes, etc.
-if(xml.isParseable("local_file.xml") {                  // Check the formatting of the file to see if it is valid before parsing 
-  xml.load("local_file.xml");                           // Load a file to a linear list of nodes with child/parent pointers to preserve XML tree structure.
-  int idx = xml.getIndexByTagFirstOrDefault("data");    // Get the index of a particular node by type.
-  XMLnode open_node(L"<test_val id="2">");              // Create an scoped 'open' node with tag 'test_val'.
-  XMLnode close_node(L"</test_val>"));                  // Create a closing node to match the open 'test_val' node to close this scope.
-  xml.nodes.insert(xml.nodes.begin() + idx, open_node); // Insert both nodes into the linear node list.
-  xml.nodes.insert(xml.nodes.begin() + idx + 1, close_node);
-  xml.save("local_file.xml");                           // Write file to disk, overwriting the local_file.xml file's contents by default.
-}
-else{
-  std::cout << "Cannot parse file.";
-}
+XMLparser xml;                                        // Create instance of the parser object to hold nodes, etc.
+xml.load("local_file.xml");                           // Load a file to a linear list of nodes with child/parent pointers to preserve XML tree structure.
+int idx = xml.getIndexByTagFirstOrDefault("data");    // Get the index of a particular node by type.
+XMLnode open_node(L"<test_val id="2">");              // Create an scoped 'open' node with tag 'test_val'.
+XMLnode close_node(L"</test_val>"));                  // Create a closing node to match the open 'test_val' node to close this scope.
+xml.nodes.insert(xml.nodes.begin() + idx, open_node); // Insert both nodes into the linear node list.
+xml.nodes.insert(xml.nodes.begin() + idx + 1, close_node);
+xml.save("local_file.xml");                           // Write file to disk, overwriting the local_file.xml file's contents by default.
 ````
 
 ### Supported  
