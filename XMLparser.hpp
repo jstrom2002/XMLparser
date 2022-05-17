@@ -603,22 +603,20 @@ namespace XMLparser{
         bool doSingleParsePass(XMLifstream& fin, std::shared_ptr<XMLnode>& curr_parent, XMLstring& str, XMLstring& innerText, XMLchar& curr_char, bool& in_comment) {
             if(!parseInnerText(fin, innerText, str, curr_char)) {return false;}
             if(!parseTag(fin, str, curr_char, in_comment)){return false;}
-            if (nodes.size() > 0) { nodes.back()->innerText = innerText; }//save inner text to current node
-            std::shared_ptr<XMLnode> nd = std::make_shared<XMLnode>(str, curr_parent);
-
-            if(nd->tag.find(L"COLLADA")!=XMLstring::npos&&nd->type==XML_TAG_TYPE::CLOSE)
-                int BREAK_HERE=0;//DELETE ME
-
-            if (nd->type != XML_TAG_TYPE::COMMENT) { nodes.push_back(nd); }
-            else { nd->tag = nd->innerText = L""; }
-            if (curr_parent == nullptr && nd->type == XML_TAG_TYPE::OPEN) { curr_parent = nodes.back(); }//initialization
-            if (curr_parent != nullptr && nodes.back() != curr_parent && nd->type != XML_TAG_TYPE::CLOSE) {//assign children
-                curr_parent->children.push_back(nodes.back());
-            }
-            if (nodes.back()->type == XML_TAG_TYPE::OPEN) { curr_parent = nodes.back(); }//make current node the parent
-            else if (nodes.back()->type == XML_TAG_TYPE::CLOSE) {//backtrack
-                std::shared_ptr<XMLnode> match_nd = findTagPair(nodes.back());
-                if (match_nd) { curr_parent = match_nd->parent; nodes.back()->parent = curr_parent; }
+            if(nodes.size()>0){nodes.back()->innerText=innerText;}//save inner text to current node
+            std::shared_ptr<XMLnode> nd=std::make_shared<XMLnode>(str, curr_parent);
+            if(nd && nd->type!=XML_TAG_TYPE::COMMENT){nodes.push_back(nd);}
+            else{nd->tag=nd->innerText=L"";}
+            if(nodes.size()>0){
+                if(curr_parent==nullptr&&nd->type == XML_TAG_TYPE::OPEN){curr_parent=nodes.back();}//initialization
+                if(curr_parent!=nullptr&&nodes.back()!=curr_parent&&nd->type!=XML_TAG_TYPE::CLOSE){//assign children
+                    curr_parent->children.push_back(nodes.back());
+                }
+                if(nodes.back()->type==XML_TAG_TYPE::OPEN){curr_parent=nodes.back();}//make current node the parent
+                else if(nodes.back()->type==XML_TAG_TYPE::CLOSE){//backtrack
+                    std::shared_ptr<XMLnode> match_nd = findTagPair(nodes.back());
+                    if (match_nd) { curr_parent = match_nd->parent; nodes.back()->parent = curr_parent; }
+                }
             }
             str = innerText = L"";
             in_comment = false;
