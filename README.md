@@ -32,7 +32,7 @@ xml.save("local_file.xml");                           // Write file to disk, ove
 
 ### Supported  
 XML versions: 1.0, 1.1  
-Encodings: UTF-8, UTF-16  
+Encodings: ASCII/plaintext, UTF-8, UTF-16  
 
 
 
