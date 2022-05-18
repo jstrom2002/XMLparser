@@ -21,7 +21,9 @@ This library will parse nearly any valid XML formatted file, including file type
 load/save a file:  
 ````  
 XMLparser xml;                                        // Create instance of the parser object to hold nodes, etc.  
-xml.load("local_file.xml");                           // Load a file to a linear list of nodes with child/parent pointers to preserve XML tree structure.  
+xml.load("local_file.xml");                           // Load a file to a linear list of nodes with child/parent pointers to preserve XML tree structure. 
+if(!xml.validate())                                   // Check loaded xml nodes to see if the results are valid.
+  return;
 int idx = xml.getIndexByTagFirstOrDefault("data");    // Get the index of a particular node by type.  
 XMLnode open_node(L"<test_val id="2">");              // Create an scoped 'open' node with tag 'test_val'.  
 XMLnode close_node(L"</test_val>"));                  // Create a closing node to match the open 'test_val' node to close this scope.  
