@@ -1,6 +1,6 @@
 /* MIT License
 
-Copyright (c) 2021 JH Strom
+Copyright (c) 2022 JH Strom
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -78,19 +78,12 @@ namespace XMLparser{
         fin.seekg(curr_pos, XMLifstream::beg);
         return sz;
     }
-    void remove(XMLstring& str,const XMLstring& to_remove){if(str.length()>0&&str.find(to_remove)!=XMLstring::npos)
+    void remove(XMLstring& str,const XMLstring& to_remove){if(str.length()>0&&to_remove.size()>0&&str.find(to_remove)!=XMLstring::npos)
         {str=str.substr(to_remove.length(),str.length()-to_remove.length());}}
-    void removeTagBeginnings(XMLstring& str){
-        const XMLstring to_remove[]={L"<!--",L"</",L"<!",L"<?",L"<"};
-        for(XMLuint i=0;i<5;++i){remove(str,to_remove[i]);}
+    void removeFromEnd(XMLstring& str,const XMLstring& to_remove){if(str.length()>0&&to_remove.length()>0&&str.rfind(to_remove)!=XMLstring::npos)
+        str=str.substr(0,str.length()-to_remove.length());
     }
-    void removeTagEndings(XMLstring& str) {
-        const XMLstring to_remove[]={L"-->",L"/>",L"?>",L">"};
-        for(XMLuint i=0;i<4;++i){
-            if (str.length()>0&&str.rfind(to_remove[i])!=XMLstring::npos)
-                str=str.substr(0,str.length()-to_remove[i].length());
-        }
-    }
+
     XML_TAG_TYPE typeFromTag(const XMLstring& str) {
         if(str.find(L"<!--")!=XMLstring::npos||str.rfind(L"-->")!=XMLstring::npos){return XML_TAG_TYPE::COMMENT; }
         else if(str.find(L"<?")!=XMLstring::npos){return XML_TAG_TYPE::XML_DEFINITION; }
@@ -117,8 +110,9 @@ namespace XMLparser{
                 key=str;            
             else{key=str.substr(0,eq);value=str.substr(eq+1,str.length()-eq-1);}
         }
-        XMLstring ToString(){return key+((value.length()>0)?(L"="+value):(L"")); }
-        bool validate(){return key.length()>0&&key[0]!=L'<';}
+        bool empty(){return key.length()==0&&value.length()==0;}
+        XMLstring ToString(){return key+((value.length()>0)?(L"="+value):(L""));}
+        bool validate(){return key.length()>0;}
     };
     class XMLnode{
     public:
@@ -197,8 +191,7 @@ namespace XMLparser{
                     }
                     start_tp=typeFromTag(tag);
                     type = start_tp;
-                    removeTagBeginnings(tag);
-                    removeTagEndings(tag);
+                    remove(tag, TAG_BEGINNINGS[XMLuint(type)]);
                     if (tag.length() == 0) {
                         XML_EXCEPTION(L"ERROR! Could not parse tag for entry: " + str);
                     }
@@ -207,15 +200,29 @@ namespace XMLparser{
                     XMLstring attr_str=str.substr(start_pos, end_pos-start_pos+1);
                     if (end_pos>=str.length()-1){
                         end_tp=typeFromTag(attr_str);
-                        removeTagEndings(attr_str);
                     }
                     trimWhitespace(attr_str);
                     if(attr_str.length()>0)
                         attributes.push_back(std::make_shared<XMLattribute>(attr_str));
                 }
             }
-            if(start_tp==XML_TAG_TYPE::OPEN&&end_tp==XML_TAG_TYPE::SELF_CLOSING)
+            if(start_tp==XML_TAG_TYPE::OPEN&&end_tp==XML_TAG_TYPE::SELF_CLOSING){
                 type=end_tp;
+            }
+            if (attributes.size()==0){
+                removeFromEnd(tag,TAG_ENDINGS[XMLuint(type)]);
+            }
+            else {
+                std::shared_ptr<XMLattribute> atr = attributes[attributes.size()-1];
+                if(atr->value.length()==0)
+                    removeFromEnd(atr->key, TAG_ENDINGS[XMLuint(type)]);
+                else
+                    removeFromEnd(atr->value, TAG_ENDINGS[XMLuint(type)]);
+                trimWhitespace(atr->key);
+                trimWhitespace(atr->value);
+                if(atr->empty())
+                    attributes.pop_back();
+            }
         }
     private:
         XMLstring guid;//for node uniqueness
@@ -539,7 +546,7 @@ namespace XMLparser{
             nodes.clear();
         }
         bool do_validation(){ // TO DO: add more complex validation than simple tag matching.   
-            if (nodes.size()<=1)
+            if (nodes.size()==0)
                 XML_EXCEPTION(L"ERROR! Validation failed. No nodes were parsed from file.");
             if(!encoding.validation())
                 XML_EXCEPTION(L"ERROR! Encoding validation failed. No encoding for this XML object is set.");
