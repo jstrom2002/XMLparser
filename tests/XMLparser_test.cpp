@@ -142,6 +142,37 @@ namespace XMLparser_test
 
 		return result;
 	}
+	XMLparserTestEnvironment::TEST_RESULTS XMLparserTestEnvironment::ChildrenNodesTest()
+	{
+		TEST_RESULTS result("ChildrenNodesTest");
+		result.passed = true;
+
+		XMLparser::XMLparser xml;
+
+		try {
+			result.start_time = clock();
+			xml.load("abb_irb52_7_120.dae");
+			result.end_time = clock();
+			result.seconds = float(result.end_time - result.start_time) / 1000.0f;//elapsed seconds to parse file.
+			if (print_output) {
+				xml.printToConsole();
+				std::cout << "\n\n\n===============\nXML file abb_irb52_7_120.dae parsed successfully with " <<
+					(int)xml.nodes.size() << " nodes in " << result.seconds << " sec\n\n" << std::endl;
+			}
+			result.passed &= xml.validate();
+
+			auto nd = xml.getByTag(L"node")[2];
+			result.passed &= nd->children.size()==7&&nd->parent->tag==L"node";
+
+		}
+		catch (std::exception e1) {
+			std::cerr << e1.what() << "\n*** Press ENTER to continue.****" << std::endl;
+			std::cin.get();
+			result.passed = false;
+		}
+
+		return result;
+	}
 	XMLparserTestEnvironment::TEST_RESULTS XMLparserTestEnvironment::EntireDiskTest()
 	{
 		TEST_RESULTS result("EntireDiskTest");
@@ -149,9 +180,8 @@ namespace XMLparser_test
 		unsigned int files_parsed = 0;
 
 		std::vector<std::string> paths_to_try=std::vector<std::string>{
-			//"C:\\Windows",
-			"C:\\Users",
-			"C:\\Program Files"
+			"C:\\Program Files",
+			"C:\\Users"
 		};
 
 		try {
@@ -359,28 +389,29 @@ namespace XMLparser_test
 
 			
 
-		//tests.push_back(unitTests->RunAllTests());			
-		//tests.push_back(FormatFailureTest("SOpage.html"));			
-		//tests.push_back(ParseTest("AMDUWPLauncher.xml"));			 
-		//tests.push_back(ParseTest("cube_triangulate.dae"));
-		//tests.push_back(ParseTest("BrainStem.dae"));
-		//tests.push_back(ParseTest("abb_irb52_7_120.dae"));
-		//tests.push_back(ParseTest("kawada-hironx.dae"));
-		//tests.push_back(ParseTest("SkinAndMorph.dae"));
-		//tests.push_back(ParseTest("base_jpn.xml"));
-		//tests.push_back(ParseTest("EQDefaultCurves.xml"));
-		//tests.push_back(ParseTest("Microsoft.Build.NuGetSdkResolver.xml"));
-		//tests.push_back(ParseTest("ipsar.xml"));
-		//tests.push_back(ParseTest("Manifest.xml"));
-		//tests.push_back(ParseTest("ProjectTemplateMRU.xml"));
-		//tests.push_back(XMLredefinitionTest("GeneratedByWord.xml"));
-		//tests.push_back(UTFformattingTest("SearchRedactPatterns.xml"));
-		//tests.push_back(UTFformattingTest("SearchRedactPatterns_DEU.xml"));
-		//tests.push_back(UTFformattingTest("AMDAUEPInstaller.xml"));			
-		//tests.push_back(NodePairTest("BuildHighlights.xml"));
-		//tests.push_back(NodePairTest("MonetRSA.xml"));		
-		//tests.push_back(NodePairTest("System.IO.Pipelines.xml"));
-		//tests.push_back(WriteToDiskTest("Test_3_XML.xml"));			
+		tests.push_back(unitTests->RunAllTests());			
+		tests.push_back(ChildrenNodesTest());			
+		tests.push_back(FormatFailureTest("SOpage.html"));			
+		tests.push_back(ParseTest("AMDUWPLauncher.xml"));			 
+		tests.push_back(ParseTest("cube_triangulate.dae"));
+		tests.push_back(ParseTest("BrainStem.dae"));
+		tests.push_back(ParseTest("abb_irb52_7_120.dae"));
+		tests.push_back(ParseTest("kawada-hironx.dae"));
+		tests.push_back(ParseTest("SkinAndMorph.dae"));
+		tests.push_back(ParseTest("base_jpn.xml"));
+		tests.push_back(ParseTest("EQDefaultCurves.xml"));
+		tests.push_back(ParseTest("Microsoft.Build.NuGetSdkResolver.xml"));
+		tests.push_back(ParseTest("ipsar.xml"));
+		tests.push_back(ParseTest("Manifest.xml"));
+		tests.push_back(ParseTest("ProjectTemplateMRU.xml"));
+		tests.push_back(XMLredefinitionTest("GeneratedByWord.xml"));
+		tests.push_back(UTFformattingTest("SearchRedactPatterns.xml"));
+		tests.push_back(UTFformattingTest("SearchRedactPatterns_DEU.xml"));
+		tests.push_back(UTFformattingTest("AMDAUEPInstaller.xml"));			
+		tests.push_back(NodePairTest("BuildHighlights.xml"));
+		tests.push_back(NodePairTest("MonetRSA.xml"));		
+		tests.push_back(NodePairTest("System.IO.Pipelines.xml"));
+		tests.push_back(WriteToDiskTest("Test_3_XML.xml"));			
 		tests.push_back(EntireDiskTest());
 
 
