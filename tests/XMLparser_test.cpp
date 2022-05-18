@@ -149,8 +149,8 @@ namespace XMLparser_test
 		unsigned int files_parsed = 0;
 
 		std::vector<std::string> paths_to_try=std::vector<std::string>{
+			//"C:\\Windows",
 			"C:\\Users",
-			"C:\\Windows",
 			"C:\\Program Files"
 		};
 
@@ -171,7 +171,7 @@ namespace XMLparser_test
 						continue;
 					}
 					
-					if (dirEntry.path().extension().string() == ".xml") {
+					if (dirEntry.path().extension().string() == ".xml" && !std::filesystem::is_directory(dirEntry.path())) {
 						XMLparser::XMLparser xml;
 						if (print_output)
 							std::cout << "parsing: " << str << std::endl;
@@ -370,14 +370,16 @@ namespace XMLparser_test
 		//tests.push_back(ParseTest("base_jpn.xml"));
 		//tests.push_back(ParseTest("EQDefaultCurves.xml"));
 		//tests.push_back(ParseTest("Microsoft.Build.NuGetSdkResolver.xml"));
-		//tests.push_back(ParseTest("ipsar.xml",XMLparser::XML_ENCODING::UTF_16LE));//<== this file will only load with 16-bit formatting enabled
+		//tests.push_back(ParseTest("ipsar.xml"));
+		//tests.push_back(ParseTest("Manifest.xml"));
+		//tests.push_back(ParseTest("ProjectTemplateMRU.xml"));
 		//tests.push_back(XMLredefinitionTest("GeneratedByWord.xml"));
 		//tests.push_back(UTFformattingTest("SearchRedactPatterns.xml"));
 		//tests.push_back(UTFformattingTest("SearchRedactPatterns_DEU.xml"));
 		//tests.push_back(UTFformattingTest("AMDAUEPInstaller.xml"));			
 		//tests.push_back(NodePairTest("BuildHighlights.xml"));
 		//tests.push_back(NodePairTest("MonetRSA.xml"));		
-		//tests.push_back(NodePairTest("System.IO.Pipelines.xml"));		
+		//tests.push_back(NodePairTest("System.IO.Pipelines.xml"));
 		//tests.push_back(WriteToDiskTest("Test_3_XML.xml"));			
 		tests.push_back(EntireDiskTest());
 
