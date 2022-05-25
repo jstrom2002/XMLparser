@@ -1,5 +1,5 @@
 # XMLparser
-### _C++11 Compliant Single-header C++ XML Parser._  
+### _C++17 Based Single-header C++ XML Parser._  
 
 Copyright &copy; 2022 JH Strom  
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/jstrom2002/XMLparser/main/LICENSE)
