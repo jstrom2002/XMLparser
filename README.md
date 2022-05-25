@@ -41,7 +41,7 @@ Platforms: Windows
 ### Upcoming Features  
 - Support for various encodings and formats  
 - Beautification/Uglification
-- XML Encryption/Decryption
+- XML Compression/Decompression
   
 
 ### Notes  
